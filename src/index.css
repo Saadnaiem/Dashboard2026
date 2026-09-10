@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+    color: #e5e7eb;
+}
+
+@layer components {
+    select[multiple] {
+        @apply bg-slate-900 border-2 border-slate-600 text-slate-300 rounded-lg p-2 transition-all duration-200 w-full;
+    }
+
+    select[multiple]:focus, select[multiple]:hover {
+        @apply border-sky-500 ring-2 ring-sky-500/50 outline-none;
+    }
+
+    select[multiple] option {
+        @apply p-2 rounded-md transition-colors duration-150 cursor-pointer;
+    }
+
+    select[multiple] option:hover {
+        @apply bg-slate-700 text-white;
+    }
+
+    select[multiple] option:checked {
+        @apply bg-sky-600 text-white font-bold;
+    }
+
+    /* Custom scrollbar for webkit browsers */
+    select[multiple]::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    select[multiple]::-webkit-scrollbar-track {
+        @apply bg-slate-800 rounded-r-lg;
+    }
+
+    select[multiple]::-webkit-scrollbar-thumb {
+        @apply bg-slate-600 rounded-full;
+    }
+
+    select[multiple]::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-500;
+    }
+}
+
+
+.recharts-tooltip-cursor {
+    fill: rgba(255, 255, 255, 0.1);
+}
+
+.table-sortable th {
+    @apply cursor-pointer select-none transition-colors;
+}
+
+.table-sortable th:hover {
+    @apply bg-slate-700;
+}
+
+.table-sortable .sort-asc::after {
+    content: ' ▲';
+    @apply text-sky-400;
+}
+
+.table-sortable .sort-desc::after {
+    content: ' ▼';
+    @apply text-sky-400;
+}
+
+.table-banded tbody tr:nth-child(even) {
+    @apply bg-slate-800/20;
+}

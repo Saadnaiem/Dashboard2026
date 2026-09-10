@@ -1,0 +1,5 @@
+{
+  "name": "Pharmacy Analytics",
+  "description": "An interactive analytics platform to visualize and analyze pharmacy sales data. It provides key metrics, performance charts, and deep-dive analysis for divisions, brands, and branches.",
+  "requestFramePermissions": []
+}
