@@ -75,7 +75,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onFileSelect, error }) => {
                         {selectedFile ? selectedFile.name : 'Drag & drop your CSV file here'}
                     </p>
                     <p className="text-slate-400">or click to browse</p>
-                    <p className="text-xs text-slate-500 mt-2 text-center">Required columns: DIVISION, SALES2024, SALES2025, BRANCH NAME, BRAND, ITEM DESCRIPTION</p>
+                    <p className="text-xs text-slate-500 mt-2 text-center">Required columns: DIVISION, SALES2025, SALES2026, BRANCH NAME, BRAND, ITEM DESCRIPTION</p>
                 </div>
             </div>
 

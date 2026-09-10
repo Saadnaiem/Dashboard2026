@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
                 <h1 className="text-3xl font-extrabold text-white">
                     Pharmacy Analytics
                 </h1>
-                <span className="text-lg font-semibold text-slate-400 self-end pb-1">(2024-2025)</span>
+                <span className="text-lg font-semibold text-slate-400 self-end pb-1">(2025-2026)</span>
             </div>
             {onLogout && (
                 <button 

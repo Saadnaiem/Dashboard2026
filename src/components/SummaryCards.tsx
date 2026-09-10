@@ -23,11 +23,11 @@ const SummaryCard: React.FC<{ title: string; icon: string; children: React.React
     return to ? <Link to={to} className="focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-2xl">{cardContent}</Link> : cardContent;
 };
 
-const MetricCard: React.FC<{ title: string; icon: string; value2025: number; value2024: number; to: string; }> = ({ title, icon, value2025, value2024, to }) => (
+const MetricCard: React.FC<{ title: string; icon: string; value2026: number; value2025: number; to: string; }> = ({ title, icon, value2026, value2025, to }) => (
     <SummaryCard title={title} icon={icon} to={to}>
-        <div className="text-3xl font-extrabold text-green-400">{formatNumber(value2025, 0)}</div>
-        <div className="text-base font-bold text-slate-400">2024: {formatNumber(value2024, 0)}</div>
-        <GrowthIndicator value={value2024 === 0 ? 0 : ((value2025 - value2024) / value2024) * 100} unit="" className="text-xl mt-1" />
+        <div className="text-3xl font-extrabold text-green-400">{formatNumber(value2026, 0)}</div>
+        <div className="text-base font-bold text-slate-400">2025: {formatNumber(value2025, 0)}</div>
+        <GrowthIndicator value={value2025 === 0 ? 0 : ((value2026 - value2025) / value2025) * 100} unit="" className="text-xl mt-1" />
     </SummaryCard>
 );
 
@@ -40,12 +40,12 @@ export interface SummaryCardsProps {
     saleType: 'ALL' | 'CASH' | 'CREDIT';
     filteredBranchCount?: number;
     totalBranchCount?: number;
+    percentTotal2026?: number;
     percentTotal2025?: number;
-    percentTotal2024?: number;
+    percentCash2026?: number;
     percentCash2025?: number;
-    percentCash2024?: number;
+    percentCredit2026?: number;
     percentCredit2025?: number;
-    percentCredit2024?: number;
 }
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ 
@@ -53,12 +53,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
     saleType,
     filteredBranchCount,
     totalBranchCount,
+    percentTotal2026,
     percentTotal2025,
-    percentTotal2024,
+    percentCash2026,
     percentCash2025,
-    percentCash2024,
-    percentCredit2025,
-    percentCredit2024
+    percentCredit2026,
+    percentCredit2025
 }) => {
     const isFiltered = saleType !== 'ALL';
 
@@ -70,38 +70,38 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
                     {/* Filtered Branches Card */}
                     <SummaryCard title="Branches" icon="🏬" to="/details/branches">
                         <div className="text-3xl font-extrabold text-green-400">
-                            {filteredBranchCount ?? data.branchCount2025} / {totalBranchCount ?? data.branchCount2025}
+                            {filteredBranchCount ?? data.branchCount2026} / {totalBranchCount ?? data.branchCount2026}
                         </div>
                         <div className="text-sm font-bold text-slate-400 mb-1">Filtered / Total</div>
+                        <div className="text-xs text-slate-400 font-semibold">2026: {data.branchCount2026} branches</div>
                         <div className="text-xs text-slate-400 font-semibold">2025: {data.branchCount2025} branches</div>
-                        <div className="text-xs text-slate-400 font-semibold">2024: {data.branchCount2024} branches</div>
                     </SummaryCard>
                     
                     {/* % Sales of Filtered Branches Card */}
                     <SummaryCard title="% Sales (Filtered Branches)" icon="📊">
-                        <div className="text-lg text-slate-300">2025: <span className="font-extrabold text-green-400">{(percentTotal2025 ?? 100).toFixed(1)}%</span></div>
-                        <div className="text-lg text-slate-300">2024: <span className="font-extrabold text-slate-400">{(percentTotal2024 ?? 100).toFixed(1)}%</span></div>
+                        <div className="text-lg text-slate-300">2026: <span className="font-extrabold text-green-400">{(percentTotal2026 ?? 100).toFixed(1)}%</span></div>
+                        <div className="text-lg text-slate-300">2025: <span className="font-extrabold text-slate-400">{(percentTotal2025 ?? 100).toFixed(1)}%</span></div>
                     </SummaryCard>
                     
                     {/* Total Sales Card */}
                     <SummaryCard title="Total Sales" icon="💰">
-                        <div className="text-lg text-slate-300">2025: <span className="font-extrabold text-green-400">{formatNumberAbbreviated(data.totalSales2025)}</span> {percentTotal2025 !== undefined && <span className="text-xs">({percentTotal2025.toFixed(1)}%)</span>}</div>
-                        <div className="text-lg text-slate-300">2024: <span className="font-extrabold text-slate-400">{formatNumberAbbreviated(data.totalSales2024)}</span> {percentTotal2024 !== undefined && <span className="text-xs">({percentTotal2024.toFixed(1)}%)</span>}</div>
-                        <div className="mt-1"><GrowthIndicator value={data.totalSales2024 === 0 ? (data.totalSales2025 > 0 ? Infinity : 0) : ((data.totalSales2025 - data.totalSales2024) / data.totalSales2024) * 100} className="text-sm" /></div>
+                        <div className="text-lg text-slate-300">2026: <span className="font-extrabold text-green-400">{formatNumberAbbreviated(data.totalSales2026)}</span> {percentTotal2026 !== undefined && <span className="text-xs">({percentTotal2026.toFixed(1)}%)</span>}</div>
+                        <div className="text-lg text-slate-300">2025: <span className="font-extrabold text-slate-400">{formatNumberAbbreviated(data.totalSales2025)}</span> {percentTotal2025 !== undefined && <span className="text-xs">({percentTotal2025.toFixed(1)}%)</span>}</div>
+                        <div className="mt-1"><GrowthIndicator value={data.totalSales2025 === 0 ? (data.totalSales2026 > 0 ? Infinity : 0) : ((data.totalSales2026 - data.totalSales2025) / data.totalSales2025) * 100} className="text-sm" /></div>
                     </SummaryCard>
                     
                     {/* Cash Sales Card */}
                     <SummaryCard title="Cash Sales" icon="💵">
-                        <div className="text-lg text-sky-300">2025: <span className="font-extrabold text-sky-400">{formatNumberAbbreviated(data.totalCashSales2025)}</span> {percentCash2025 !== undefined && <span className="text-xs">({percentCash2025.toFixed(1)}%)</span>}</div>
-                        <div className="text-lg text-sky-300">2024: <span className="font-extrabold text-sky-200">{formatNumberAbbreviated(data.totalCashSales2024)}</span> {percentCash2024 !== undefined && <span className="text-xs">({percentCash2024.toFixed(1)}%)</span>}</div>
-                        <div className="mt-1"><GrowthIndicator value={data.totalCashSales2024 === 0 ? (data.totalCashSales2025 > 0 ? Infinity : 0) : ((data.totalCashSales2025 - data.totalCashSales2024) / data.totalCashSales2024) * 100} className="text-sm" /></div>
+                        <div className="text-lg text-sky-300">2026: <span className="font-extrabold text-sky-400">{formatNumberAbbreviated(data.totalCashSales2026)}</span> {percentCash2026 !== undefined && <span className="text-xs">({percentCash2026.toFixed(1)}%)</span>}</div>
+                        <div className="text-lg text-sky-300">2025: <span className="font-extrabold text-sky-200">{formatNumberAbbreviated(data.totalCashSales2025)}</span> {percentCash2025 !== undefined && <span className="text-xs">({percentCash2025.toFixed(1)}%)</span>}</div>
+                        <div className="mt-1"><GrowthIndicator value={data.totalCashSales2025 === 0 ? (data.totalCashSales2026 > 0 ? Infinity : 0) : ((data.totalCashSales2026 - data.totalCashSales2025) / data.totalCashSales2025) * 100} className="text-sm" /></div>
                     </SummaryCard>
                     
                     {/* Credit Sales Card */}
                     <SummaryCard title="Credit Sales" icon="💳">
-                        <div className="text-lg text-orange-300">2025: <span className="font-extrabold text-orange-400">{formatNumberAbbreviated(data.totalCreditSales2025)}</span> {percentCredit2025 !== undefined && <span className="text-xs">({percentCredit2025.toFixed(1)}%)</span>}</div>
-                        <div className="text-lg text-orange-300">2024: <span className="font-extrabold text-orange-200">{formatNumberAbbreviated(data.totalCreditSales2024)}</span> {percentCredit2024 !== undefined && <span className="text-xs">({percentCredit2024.toFixed(1)}%)</span>}</div>
-                        <div className="mt-1"><GrowthIndicator value={data.totalCreditSales2024 === 0 ? (data.totalCreditSales2025 > 0 ? Infinity : 0) : ((data.totalCreditSales2025 - data.totalCreditSales2024) / data.totalCreditSales2024) * 100} className="text-sm" /></div>
+                        <div className="text-lg text-orange-300">2026: <span className="font-extrabold text-orange-400">{formatNumberAbbreviated(data.totalCreditSales2026)}</span> {percentCredit2026 !== undefined && <span className="text-xs">({percentCredit2026.toFixed(1)}%)</span>}</div>
+                        <div className="text-lg text-orange-300">2025: <span className="font-extrabold text-orange-200">{formatNumberAbbreviated(data.totalCreditSales2025)}</span> {percentCredit2025 !== undefined && <span className="text-xs">({percentCredit2025.toFixed(1)}%)</span>}</div>
+                        <div className="mt-1"><GrowthIndicator value={data.totalCreditSales2025 === 0 ? (data.totalCreditSales2026 > 0 ? Infinity : 0) : ((data.totalCreditSales2026 - data.totalCreditSales2025) / data.totalCreditSales2025) * 100} className="text-sm" /></div>
                     </SummaryCard>
                     
                     {/* Top Division and Metrics */}
@@ -109,13 +109,13 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
                         {data.topDivision ? (
                             <>
                                 <div className="text-xl font-bold text-sky-400 truncate" title={data.topDivision.name}>{data.topDivision.name}</div>
-                                <div className="text-sm text-slate-400">2025 Sales: {formatNumberAbbreviated(data.topDivision.sales2025)}</div>
+                                <div className="text-sm text-slate-400">2026 Sales: {formatNumberAbbreviated(data.topDivision.sales2026)}</div>
                                 <GrowthIndicator value={data.topDivision.growth} className="text-xl" />
                             </>
                         ) : <div className="text-xl font-bold text-slate-400">-</div>}
                     </SummaryCard>
-                    <MetricCard title="Brands" icon="🏷️" value2025={data.brandCount2025} value2024={data.brandCount2024} to="/details/brands" />
-                    <MetricCard title="Items" icon="📦" value2025={data.itemCount2025} value2024={data.itemCount2024} to="/details/items" />
+                    <MetricCard title="Brands" icon="🏷️" value2026={data.brandCount2026} value2025={data.brandCount2025} to="/details/brands" />
+                    <MetricCard title="Items" icon="📦" value2026={data.itemCount2026} value2025={data.itemCount2025} to="/details/items" />
                 </div>
             </section>
             
@@ -134,7 +134,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
                                 {formatNumberAbbreviated(data.pareto.branches.topSales)}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">of total 2025 sales</p>
+                        <p className="text-xs text-slate-400 mt-1">of total 2026 sales</p>
                     </SummaryCard>
                     <SummaryCard title="Top 20% Brands" icon="📊" to="/details/pareto_brands">
                         <p className="text-sm">
@@ -148,7 +148,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
                                 {formatNumberAbbreviated(data.pareto.brands.topSales)}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">of total 2025 sales</p>
+                        <p className="text-xs text-slate-400 mt-1">of total 2026 sales</p>
                     </SummaryCard>
                     <SummaryCard title="Top 20% Items" icon="📊" to="/details/pareto_items">
                         <p className="text-sm">
@@ -162,7 +162,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
                                 {formatNumberAbbreviated(data.pareto.items.topSales)}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">of total 2025 sales</p>
+                        <p className="text-xs text-slate-400 mt-1">of total 2026 sales</p>
                     </SummaryCard>
                 </div>
             </section>
@@ -170,28 +170,28 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({
             <section>
                 <SectionTitle>Brand & Item Lifecycle</SectionTitle>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <SummaryCard title="New Brands (2025)" icon="✨" to="/details/new_brands">
+                    <SummaryCard title="New Brands (2026)" icon="✨" to="/details/new_brands">
                         <div className="text-3xl font-extrabold text-green-400">{formatNumber(data.newEntities.brands.count)}</div>
                         <div className="text-sm">Sales: {formatNumberAbbreviated(data.newEntities.brands.sales)}</div>
                         <div className="text-sm">{data.newEntities.brands.percentOfTotal.toFixed(2)}% of Total Sales</div>
                     </SummaryCard>
 
-                    <SummaryCard title="Lost Brands (2024)" icon="👋" to="/details/lost_brands">
+                    <SummaryCard title="Lost Brands (2025)" icon="👋" to="/details/lost_brands">
                         <div className="text-3xl font-extrabold text-rose-400">{formatNumber(data.lostEntities.brands.count)}</div>
-                        <div className="text-base font-bold text-slate-400">2024 Sales: {formatNumberAbbreviated(data.lostEntities.brands.sales2024)}</div>
-                        <div className="text-sm">{data.lostEntities.brands.percentOfTotal.toFixed(2)}% of 2024 Sales</div>
+                        <div className="text-base font-bold text-slate-400">2025 Sales: {formatNumberAbbreviated(data.lostEntities.brands.sales2025)}</div>
+                        <div className="text-sm">{data.lostEntities.brands.percentOfTotal.toFixed(2)}% of 2025 Sales</div>
                     </SummaryCard>
 
-                    <SummaryCard title="New Items (2025)" icon="💡" to="/details/new_items">
+                    <SummaryCard title="New Items (2026)" icon="💡" to="/details/new_items">
                         <div className="text-3xl font-extrabold text-green-400">{formatNumber(data.newEntities.items.count)}</div>
                         <div className="text-sm">Sales: {formatNumberAbbreviated(data.newEntities.items.sales)}</div>
                         <div className="text-sm">{data.newEntities.items.percentOfTotal.toFixed(2)}% of Total Sales</div>
                     </SummaryCard>
 
-                    <SummaryCard title="Lost Items (2024)" icon="📉" to="/details/lost_items">
+                    <SummaryCard title="Lost Items (2025)" icon="📉" to="/details/lost_items">
                         <div className="text-3xl font-extrabold text-rose-400">{formatNumber(data.lostEntities.items.count)}</div>
-                        <div className="text-base font-bold text-slate-400">2024 Sales: {formatNumberAbbreviated(data.lostEntities.items.sales2024)}</div>
-                        <div className="text-sm">{data.lostEntities.items.percentOfTotal.toFixed(2)}% of 2024 Sales</div>
+                        <div className="text-base font-bold text-slate-400">2025 Sales: {formatNumberAbbreviated(data.lostEntities.items.sales2025)}</div>
+                        <div className="text-sm">{data.lostEntities.items.percentOfTotal.toFixed(2)}% of 2025 Sales</div>
                     </SummaryCard>
                 </div>
             </section>

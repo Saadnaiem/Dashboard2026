@@ -39,14 +39,14 @@ const Dashboard: React.FC<DashboardProps> = ({ data, filters, onFilterChange, on
             <SummaryCards 
                 data={data} 
                 saleType={filters.saleType || 'ALL'} 
-                filteredBranchCount={data.branchCount2025}
-                totalBranchCount={globalData.branchCount2025}
+                filteredBranchCount={data.branchCount2026}
+                totalBranchCount={globalData.branchCount2026}
+                percentTotal2026={globalData.totalSales2026 ? (data.totalSales2026 / globalData.totalSales2026) * 100 : 0}
                 percentTotal2025={globalData.totalSales2025 ? (data.totalSales2025 / globalData.totalSales2025) * 100 : 0}
-                percentTotal2024={globalData.totalSales2024 ? (data.totalSales2024 / globalData.totalSales2024) * 100 : 0}
+                percentCash2026={globalData.totalCashSales2026 ? (data.totalCashSales2026 / globalData.totalCashSales2026) * 100 : 0}
                 percentCash2025={globalData.totalCashSales2025 ? (data.totalCashSales2025 / globalData.totalCashSales2025) * 100 : 0}
-                percentCash2024={globalData.totalCashSales2024 ? (data.totalCashSales2024 / globalData.totalCashSales2024) * 100 : 0}
+                percentCredit2026={globalData.totalCreditSales2026 ? (data.totalCreditSales2026 / globalData.totalCreditSales2026) * 100 : 0}
                 percentCredit2025={globalData.totalCreditSales2025 ? (data.totalCreditSales2025 / globalData.totalCreditSales2025) * 100 : 0}
-                percentCredit2024={globalData.totalCreditSales2024 ? (data.totalCreditSales2024 / globalData.totalCreditSales2024) * 100 : 0}
             />
             <Charts data={data} filters={filters} onFilterChange={onFilterChange} />
 

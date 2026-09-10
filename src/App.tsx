@@ -14,11 +14,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 
 const createEmptyProcessedData = (filterOptions: ProcessedData['filterOptions']): ProcessedData => ({
-    totalSales2024: 0, totalSales2025: 0, totalCashSales2024: 0, totalCashSales2025: 0, totalCreditSales2024: 0, totalCreditSales2025: 0, salesGrowthPercentage: 0,
+    totalSales2025: 0, totalSales2026: 0, totalCashSales2025: 0, totalCashSales2026: 0, totalCreditSales2025: 0, totalCreditSales2026: 0, salesGrowthPercentage: 0,
     salesByDivision: [], salesByDepartment: [], salesByCategory: [], salesBySubcategory: [], salesByClass: [],
     salesByBrand: [], salesByBranch: [], salesByItem: [], salesByType: [], salesByTypePlus: [],
-    top10Brands: [], top50Items: [], branchCount2024: 0, branchCount2025: 0, brandCount2024: 0, brandCount2025: 0, itemCount2024: 0,
-    itemCount2025: 0, topDivision: null,
+    top10Brands: [], top50Items: [], branchCount2025: 0, branchCount2026: 0, brandCount2025: 0, brandCount2026: 0, itemCount2025: 0,
+    itemCount2026: 0, topDivision: null,
     pareto: {
         branches: { topCount: 0, salesPercent: 0, totalSales: 0, totalContributors: 0, topSales: 0 },
         brands: { topCount: 0, salesPercent: 0, totalSales: 0, totalContributors: 0, topSales: 0 },
@@ -32,8 +32,8 @@ const createEmptyProcessedData = (filterOptions: ProcessedData['filterOptions'])
     },
     newBrandsList: [], newItemsList: [],
     lostEntities: {
-        brands: { count: 0, sales2024: 0, percentOfTotal: 0 },
-        items: { count: 0, sales2024: 0, percentOfTotal: 0 },
+        brands: { count: 0, sales2025: 0, percentOfTotal: 0 },
+        items: { count: 0, sales2025: 0, percentOfTotal: 0 },
     },
     lostBrandsList: [], lostItemsList: [], filterOptions: filterOptions,
 });

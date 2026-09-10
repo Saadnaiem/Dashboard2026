@@ -79,7 +79,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </div>
                 </form>
                 <div className="text-center pt-4 border-t border-slate-700">
-                    <p className="font-bold text-white text-sm">© 2025 Prepared by Dr. Saad Naiem Ali</p>
+                    <p className="font-bold text-white text-sm">© 2026 Prepared by Dr. Saad Naiem Ali</p>
                 </div>
             </div>
         </div>

@@ -17,21 +17,21 @@ interface SortConfig { key: string; direction: SortDirection; }
 type DrilldownItem = {
     name: string;
     code?: string;
-    sales2024?: number;
     sales2025?: number;
+    sales2026?: number;
+    cash2026?: number;
+    credit2026?: number;
     cash2025?: number;
     credit2025?: number;
-    cash2024?: number;
-    credit2024?: number;
     growth?: number;
     cashGrowth?: number;
     creditGrowth?: number;
+    cashContribution2026?: number;
     cashContribution2025?: number;
-    cashContribution2024?: number;
 };
 // ... (in DrilldownView)
 // Update metric helper to be robust
-const getMetric = (row: RawSalesDataRow, year: '2024' | '2025', type: 'TOTAL' | 'CASH' | 'CREDIT') => {
+const getMetric = (row: RawSalesDataRow, year: '2025' | '2026', type: 'TOTAL' | 'CASH' | 'CREDIT') => {
     const key = `${year} ${type} SALES`;
     return (row[key] as number) || 0;
 };
@@ -59,10 +59,10 @@ const viewTitles: { [key: string]: string } = {
     'pareto_branches': 'Pareto: Top 20% Branches',
     'pareto_brands': 'Pareto: Top 20% Brands',
     'pareto_items': 'Pareto: Top 20% Items',
-    'new_brands': 'New Brands in 2025',
-    'new_items': 'New Items in 2025',
-    'lost_brands': 'Lost Brands from 2024',
-    'lost_items': 'Lost Items from 2024',
+    'new_brands': 'New Brands in 2026',
+    'new_items': 'New Items in 2026',
+    'lost_brands': 'Lost Brands from 2025',
+    'lost_items': 'Lost Items from 2025',
 };
 
 const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterOptions, globalData }) => {
@@ -71,7 +71,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
     const navigate = useNavigate();
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'sales2025', direction: 'descending' });
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'sales2026', direction: 'descending' });
     const [showFilters, setShowFilters] = useState(false);
     const filterContainerRef = useRef<HTMLDivElement>(null);
 
@@ -223,72 +223,72 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
 
         let displayData: DrilldownItem[] = [];
         let currentTitle = viewTitles[viewType] || 'Deep Dive';
-        let localTotal24 = 0;
         let localTotal25 = 0;
+        let localTotal26 = 0;
 
         locallyFilteredRawData.forEach(row => {
-            const t24 = getMetric(row, '2024', 'TOTAL') || (row['SALES2024'] as number) || 0;
             const t25 = getMetric(row, '2025', 'TOTAL') || (row['SALES2025'] as number) || 0;
-            localTotal24 += t24;
+            const t26 = getMetric(row, '2026', 'TOTAL') || (row['SALES2026'] as number) || 0;
             localTotal25 += t25;
+            localTotal26 += t26;
         });
 
         const reprocessLocally = (entityKey: 'BRANCH NAME' | 'BRAND' | 'ITEM DESCRIPTION' | 'DIVISION' | 'DEPARTMENT' | 'CATEGORY' | 'SUBCATEGORY' | 'CLASS' | 'TYPE' | 'TYPE Plus') => {
-            const sales: { [key: string]: { s24: number, s25: number, c25: number, cr25: number, c24: number, cr24: number, code?: string } } = {};
+            const sales: { [key: string]: { s25: number, s26: number, c26: number, cr26: number, c25: number, cr25: number, code?: string } } = {};
             locallyFilteredRawData.forEach(row => {
                 const key = row[entityKey];
                 if (key) {
-                    sales[key] = sales[key] || { s24: 0, s25: 0, c25: 0, cr25: 0, c24: 0, cr24: 0, code: row['ITEM CODE'] };
-                    sales[key].s24 += getMetric(row, '2024', 'TOTAL') || (row['SALES2024'] as number) || 0;
+                    sales[key] = sales[key] || { s25: 0, s26: 0, c26: 0, cr26: 0, c25: 0, cr25: 0, code: row['ITEM CODE'] };
                     sales[key].s25 += getMetric(row, '2025', 'TOTAL') || (row['SALES2025'] as number) || 0;
+                    sales[key].s26 += getMetric(row, '2026', 'TOTAL') || (row['SALES2026'] as number) || 0;
 
+                    sales[key].c26 += getMetric(row, '2026', 'CASH');
+                    sales[key].cr26 += getMetric(row, '2026', 'CREDIT');
                     sales[key].c25 += getMetric(row, '2025', 'CASH');
                     sales[key].cr25 += getMetric(row, '2025', 'CREDIT');
-                    sales[key].c24 += getMetric(row, '2024', 'CASH');
-                    sales[key].cr24 += getMetric(row, '2024', 'CREDIT');
                 }
             });
-            return Object.entries(sales).map(([name, { s24, s25, c25, cr25, c24, cr24, code }]) => ({
+            return Object.entries(sales).map(([name, { s25, s26, c26, cr26, c25, cr25, code }]) => ({
                 name,
                 code,
-                sales2024: s24,
                 sales2025: s25,
+                sales2026: s26,
+                cash2026: c26,
+                credit2026: cr26,
                 cash2025: c25,
                 credit2025: cr25,
-                cash2024: c24,
-                credit2024: cr24,
-                growth: s24 === 0 ? (s25 > 0 ? Infinity : 0) : ((s25 - s24) / s24) * 100,
-                cashGrowth: c24 === 0 ? (c25 > 0 ? Infinity : 0) : ((c25 - c24) / c24) * 100,
-                creditGrowth: cr24 === 0 ? (cr25 > 0 ? Infinity : 0) : ((cr25 - cr24) / cr24) * 100,
-                cashContribution2025: s25 > 0 ? (c25 / s25) * 100 : 0,
-                cashContribution2024: s24 > 0 ? (c24 / s24) * 100 : 0
+                growth: s25 === 0 ? (s26 > 0 ? Infinity : 0) : ((s26 - s25) / s25) * 100,
+                cashGrowth: c25 === 0 ? (c26 > 0 ? Infinity : 0) : ((c26 - c25) / c25) * 100,
+                creditGrowth: cr25 === 0 ? (cr26 > 0 ? Infinity : 0) : ((cr26 - cr25) / cr25) * 100,
+                cashContribution2026: s26 > 0 ? (c26 / s26) * 100 : 0,
+                cashContribution2025: s25 > 0 ? (c25 / s25) * 100 : 0
             }));
         };
 
         const findNewOrLost = (isNew: boolean) => {
             const entityKey = viewType.includes('brand') ? 'BRAND' : 'ITEM DESCRIPTION';
-            const sales: { [key: string]: { s24: number, s25: number, c25: number, cr25: number, code?: string } } = {};
+            const sales: { [key: string]: { s25: number, s26: number, c26: number, cr26: number, code?: string } } = {};
             locallyFilteredRawData.forEach(row => {
                 const key = row[entityKey];
                 if (key) {
-                    sales[key] = sales[key] || { s24: 0, s25: 0, c25: 0, cr25: 0, code: row['ITEM CODE'] };
-                    const t24 = getMetric(row, '2024', 'TOTAL') || (row['SALES2024'] as number) || 0;
+                    sales[key] = sales[key] || { s25: 0, s26: 0, c26: 0, cr26: 0, code: row['ITEM CODE'] };
                     const t25 = getMetric(row, '2025', 'TOTAL') || (row['SALES2025'] as number) || 0;
-                    sales[key].s24 += t24;
+                    const t26 = getMetric(row, '2026', 'TOTAL') || (row['SALES2026'] as number) || 0;
                     sales[key].s25 += t25;
-                    sales[key].c25 += getMetric(row, '2025', 'CASH');
-                    sales[key].cr25 += getMetric(row, '2025', 'CREDIT');
+                    sales[key].s26 += t26;
+                    sales[key].c26 += getMetric(row, '2026', 'CASH');
+                    sales[key].cr26 += getMetric(row, '2026', 'CREDIT');
                 }
             });
 
             return Object.entries(sales)
-                .filter(([, { s24, s25 }]) => (isNew ? (s25 > 0 && s24 === 0) : (s24 > 0 && s25 === 0)))
-                .map(([name, { s24, s25, c25, cr25, code }]) => ({ name, code, sales2024: s24, sales2025: s25, cash2025: c25, credit2025: cr25 }));
+                .filter(([, { s25, s26 }]) => (isNew ? (s26 > 0 && s25 === 0) : (s25 > 0 && s26 === 0)))
+                .map(([name, { s25, s26, c26, cr26, code }]) => ({ name, code, sales2025: s25, sales2026: s26, cash2026: c26, credit2026: cr26 }));
         };
 
         const findPareto = (entityKey: 'BRANCH NAME' | 'BRAND' | 'ITEM DESCRIPTION') => {
             const aggregated = reprocessLocally(entityKey);
-            const sorted = aggregated.filter(i => (i.sales2025 || 0) > 0).sort((a, b) => (b.sales2025 || 0) - (a.sales2025 || 0));
+            const sorted = aggregated.filter(i => (i.sales2026 || 0) > 0).sort((a, b) => (b.sales2026 || 0) - (a.sales2026 || 0));
             const topCount = Math.max(1, Math.ceil(sorted.length * 0.20));
             return sorted.slice(0, topCount);
         };
@@ -322,11 +322,11 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                     if (existing) return existing;
                     return {
                         name: branchName,
-                        sales2024: 0, sales2025: 0,
+                        sales2025: 0, sales2026: 0,
+                        cash2026: 0, credit2026: 0,
                         cash2025: 0, credit2025: 0,
-                        cash2024: 0, credit2024: 0,
                         growth: 0, cashGrowth: 0, creditGrowth: 0,
-                        cashContribution2025: 0, cashContribution2024: 0
+                        cashContribution2026: 0, cashContribution2025: 0
                     };
                 });
                 break;
@@ -348,15 +348,15 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
             { key: 'rowNumber', label: '#' },
             { key: 'code', label: 'Item Code' },
             { key: 'name', label: 'Name' },
-            { key: 'sales2025', label: 'Total 2025', className: 'text-right' },
-            { key: 'cash2025', label: 'Cash 2025', className: 'text-right bg-sky-900/20 text-sky-100' },
-            { key: 'credit2025', label: 'Credit 2025', className: 'text-right bg-orange-900/20 text-orange-100' },
-            { key: 'cashContribution2025', label: 'Cash % 25', className: 'text-right text-xs bg-sky-900/20 text-sky-200' },
+            { key: 'sales2026', label: 'Total 2026', className: 'text-right' },
+            { key: 'cash2026', label: 'Cash 2026', className: 'text-right bg-sky-900/20 text-sky-100' },
+            { key: 'credit2026', label: 'Credit 2026', className: 'text-right bg-orange-900/20 text-orange-100' },
+            { key: 'cashContribution2026', label: 'Cash % 26', className: 'text-right text-xs bg-sky-900/20 text-sky-200' },
 
-            { key: 'sales2024', label: 'Total 2024', className: 'text-right border-l border-slate-600' },
-            { key: 'cash2024', label: 'Cash 2024', className: 'text-right bg-sky-900/10 text-sky-200/70' },
-            { key: 'credit2024', label: 'Credit 2024', className: 'text-right bg-orange-900/10 text-orange-200/70' },
-            { key: 'cashContribution2024', label: 'Cash % 24', className: 'text-right text-xs bg-sky-900/10 text-sky-200/70' },
+            { key: 'sales2025', label: 'Total 2025', className: 'text-right border-l border-slate-600' },
+            { key: 'cash2025', label: 'Cash 2025', className: 'text-right bg-sky-900/10 text-sky-200/70' },
+            { key: 'credit2025', label: 'Credit 2025', className: 'text-right bg-orange-900/10 text-orange-200/70' },
+            { key: 'cashContribution2025', label: 'Cash % 25', className: 'text-right text-xs bg-sky-900/10 text-sky-200/70' },
 
             { key: 'growth', label: 'Total GR%', className: 'text-right border-l border-slate-600' },
             { key: 'cashGrowth', label: 'Cash GR%', className: 'text-right text-xs' },
@@ -365,22 +365,22 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
         const getHeaders = (keys: string[]) => allHeaders.filter(h => keys.includes(h.key));
 
         let currentHeaders;
-        const defaultKeys = ['rowNumber', 'name', 'sales2025', 'sales2024', 'growth', 'cash2025', 'cash2024', 'cashContribution2025', 'cashGrowth', 'credit2025', 'credit2024', 'creditGrowth'];
+        const defaultKeys = ['rowNumber', 'name', 'sales2026', 'sales2025', 'growth', 'cash2026', 'cash2025', 'cashContribution2026', 'cashGrowth', 'credit2026', 'credit2025', 'creditGrowth'];
         if (isItemView) defaultKeys.splice(1, 0, 'code');
 
         switch (viewType) {
-            case 'new_brands': currentHeaders = getHeaders(['rowNumber', 'name', 'sales2025', 'cash2025', 'credit2025', 'contribution2025']); break;
-            case 'new_items': currentHeaders = getHeaders(['rowNumber', 'code', 'name', 'sales2025', 'cash2025', 'credit2025', 'contribution2025']); break;
-            case 'lost_brands': currentHeaders = getHeaders(['rowNumber', 'name', 'sales2024', 'contribution2024']); break;
-            case 'lost_items': currentHeaders = getHeaders(['rowNumber', 'code', 'name', 'sales2024', 'contribution2024']); break;
+            case 'new_brands': currentHeaders = getHeaders(['rowNumber', 'name', 'sales2026', 'cash2026', 'credit2026', 'contribution2026']); break;
+            case 'new_items': currentHeaders = getHeaders(['rowNumber', 'code', 'name', 'sales2026', 'cash2026', 'credit2026', 'contribution2026']); break;
+            case 'lost_brands': currentHeaders = getHeaders(['rowNumber', 'name', 'sales2025', 'contribution2025']); break;
+            case 'lost_items': currentHeaders = getHeaders(['rowNumber', 'code', 'name', 'sales2025', 'contribution2025']); break;
             default:
                 currentHeaders = getHeaders(defaultKeys);
         }
 
         let finalData = displayData.map(item => ({
             ...item,
-            contribution2025: localTotal25 > 0 && item.sales2025 ? (item.sales2025 / localTotal25) * 100 : 0,
-            contribution2024: localTotal24 > 0 && item.sales2024 ? (item.sales2024 / localTotal24) * 100 : 0
+            contribution2026: localTotal26 > 0 && item.sales2026 ? (item.sales2026 / localTotal26) * 100 : 0,
+            contribution2025: localTotal25 > 0 && item.sales2025 ? (item.sales2025 / localTotal25) * 100 : 0
         }));
 
         if (searchTerm) finalData = finalData.filter(item =>
@@ -400,15 +400,15 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
 
         const summaryTotals = {
             count: finalData.length,
+            total2026: finalData.reduce((acc, item) => acc + (item.sales2026 || 0), 0),
             total2025: finalData.reduce((acc, item) => acc + (item.sales2025 || 0), 0),
-            total2024: finalData.reduce((acc, item) => acc + (item.sales2024 || 0), 0),
+            totalCash2026: finalData.reduce((acc, item) => acc + (item.cash2026 || 0), 0),
             totalCash2025: finalData.reduce((acc, item) => acc + (item.cash2025 || 0), 0),
-            totalCash2024: finalData.reduce((acc, item) => acc + (item.cash2024 || 0), 0),
+            totalCredit2026: finalData.reduce((acc, item) => acc + (item.credit2026 || 0), 0),
             totalCredit2025: finalData.reduce((acc, item) => acc + (item.credit2025 || 0), 0),
-            totalCredit2024: finalData.reduce((acc, item) => acc + (item.credit2024 || 0), 0),
             growth: 0,
         };
-        summaryTotals.growth = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.total2025, summaryTotals.total2024);
+        summaryTotals.growth = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.total2026, summaryTotals.total2025);
 
         const generateDescription = () => {
             // Description simplified for the deep dive
@@ -430,7 +430,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
         if (isBrandOrItemView) {
             const totalInView = displayData.length;
             if (totalInView > 0) {
-                const soldInView = displayData.filter(item => item.sales2025 && item.sales2025 > 0).length;
+                const soldInView = displayData.filter(item => item.sales2026 && item.sales2026 > 0).length;
                 performanceRateStats = {
                     rate: (soldInView / totalInView) * 100,
                     sold: soldInView,
@@ -515,24 +515,24 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
 
                 }
 
-                return <td className={`p-4 font-medium truncate max-w-sm ${(item.sales2025 || 0) === 0 ? 'text-rose-400' : 'text-white'}`} title={value}>{value}</td>;
+                return <td className={`p-4 font-medium truncate max-w-sm ${(item.sales2026 || 0) === 0 ? 'text-rose-400' : 'text-white'}`} title={value}>{value}</td>;
 
-            case 'sales2025': return <td className="p-4 text-right font-semibold text-green-300">{formatNumberAbbreviated(value)}</td>;
-            case 'cash2025': return <td className="p-4 text-right text-xs text-sky-200">{formatNumberAbbreviated(value)}</td>;
-            case 'credit2025': return <td className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(value)}</td>;
-            case 'cashContribution2025': return <td className="p-4 text-right text-xs text-sky-200">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
+            case 'sales2026': return <td className="p-4 text-right font-semibold text-green-300">{formatNumberAbbreviated(value)}</td>;
+            case 'cash2026': return <td className="p-4 text-right text-xs text-sky-200">{formatNumberAbbreviated(value)}</td>;
+            case 'credit2026': return <td className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(value)}</td>;
+            case 'cashContribution2026': return <td className="p-4 text-right text-xs text-sky-200">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
 
-            case 'sales2024': return <td className="p-4 text-right text-slate-400">{formatNumberAbbreviated(value)}</td>;
-            case 'cash2024': return <td className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(value)}</td>;
-            case 'credit2024': return <td className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(value)}</td>;
-            case 'cashContribution2024': return <td className="p-4 text-right text-xs text-sky-200/70">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
+            case 'sales2025': return <td className="p-4 text-right text-slate-400">{formatNumberAbbreviated(value)}</td>;
+            case 'cash2025': return <td className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(value)}</td>;
+            case 'credit2025': return <td className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(value)}</td>;
+            case 'cashContribution2025': return <td className="p-4 text-right text-xs text-sky-200/70">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
 
             case 'growth': return <td className="p-4 text-right"><GrowthIndicator value={value} /></td>;
             case 'cashGrowth': return <td className="p-4 text-right text-xs"><GrowthIndicator value={value} /></td>;
             case 'creditGrowth': return <td className="p-4 text-right text-xs"><GrowthIndicator value={value} /></td>;
 
+            case 'contribution2026':
             case 'contribution2025':
-            case 'contribution2024':
                 return <td className="p-4 text-right">{typeof value === 'number' ? `${value.toFixed(2)}%` : '-'}</td>;
             default: return <td></td>;
         }
@@ -592,27 +592,27 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
             // Calculate Footer Row
             const footerRow = headers.map((h, index) => {
                 if (index === 0) return `Totals (${summaryTotals.count})`; // First column (usually #)
-                if (index < headers.findIndex(head => ['sales2025', 'sales2024'].includes(head.key))) return ''; // Empty for non-numeric lead columns
+                if (index < headers.findIndex(head => ['sales2026', 'sales2025'].includes(head.key))) return ''; // Empty for non-numeric lead columns
 
                 switch (h.key) {
+                    case 'sales2026': return formatNumberAbbreviated(summaryTotals.total2026);
+                    case 'cash2026': return formatNumberAbbreviated(summaryTotals.totalCash2026);
+                    case 'credit2026': return formatNumberAbbreviated(summaryTotals.totalCredit2026);
+                    case 'cashContribution2026': return summaryTotals.total2026 > 0 ? `${((summaryTotals.totalCash2026 / summaryTotals.total2026) * 100).toFixed(1)}%` : '-';
+
                     case 'sales2025': return formatNumberAbbreviated(summaryTotals.total2025);
                     case 'cash2025': return formatNumberAbbreviated(summaryTotals.totalCash2025);
                     case 'credit2025': return formatNumberAbbreviated(summaryTotals.totalCredit2025);
                     case 'cashContribution2025': return summaryTotals.total2025 > 0 ? `${((summaryTotals.totalCash2025 / summaryTotals.total2025) * 100).toFixed(1)}%` : '-';
 
-                    case 'sales2024': return formatNumberAbbreviated(summaryTotals.total2024);
-                    case 'cash2024': return formatNumberAbbreviated(summaryTotals.totalCash2024);
-                    case 'credit2024': return formatNumberAbbreviated(summaryTotals.totalCredit2024);
-                    case 'cashContribution2024': return summaryTotals.total2024 > 0 ? `${((summaryTotals.totalCash2024 / summaryTotals.total2024) * 100).toFixed(1)}%` : '-';
-
                     case 'growth': return summaryTotals.growth === Infinity ? 'New' : `${summaryTotals.growth.toFixed(2)}%`;
 
                     case 'cashGrowth':
-                        const cg = ((summaryTotals.totalCash2025 - summaryTotals.totalCash2024) / summaryTotals.totalCash2024) * 100;
-                        return !isFinite(cg) ? (summaryTotals.totalCash2025 > 0 ? 'New' : '-') : `${cg.toFixed(2)}%`;
+                        const cg = ((summaryTotals.totalCash2026 - summaryTotals.totalCash2025) / summaryTotals.totalCash2025) * 100;
+                        return !isFinite(cg) ? (summaryTotals.totalCash2026 > 0 ? 'New' : '-') : `${cg.toFixed(2)}%`;
                     case 'creditGrowth':
-                        const crg = ((summaryTotals.totalCredit2025 - summaryTotals.totalCredit2024) / summaryTotals.totalCredit2024) * 100;
-                        return !isFinite(crg) ? (summaryTotals.totalCredit2025 > 0 ? 'New' : '-') : `${crg.toFixed(2)}%`;
+                        const crg = ((summaryTotals.totalCredit2026 - summaryTotals.totalCredit2025) / summaryTotals.totalCredit2025) * 100;
+                        return !isFinite(crg) ? (summaryTotals.totalCredit2026 > 0 ? 'New' : '-') : `${crg.toFixed(2)}%`;
 
                     default: return '';
                 }
@@ -655,14 +655,14 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
     };
 
     const tableFooter = useMemo(() => {
-        const firstNumericIndex = headers.findIndex(h => ['sales2025', 'sales2024'].includes(h.key));
+        const firstNumericIndex = headers.findIndex(h => ['sales2026', 'sales2025'].includes(h.key));
         let labelColSpan = headers.length;
         if (firstNumericIndex > -1) {
             labelColSpan = firstNumericIndex;
         }
 
         // const totalContribution2025 = allRawData.reduce((acc, row) => acc + (row['2025 TOTAL SALES'] || 0), 0);
-        // const totalContribution2024 = allRawData.reduce((acc, row) => acc + (row['2024 TOTAL SALES'] || 0), 0);
+        // ...
 
         return (
 
@@ -672,25 +672,25 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                 </td>
                 {headers.slice(labelColSpan).map(h => {
                     switch (h.key) {
-                        case 'sales2025': return <td key={h.key} className="p-4 text-right text-green-300">{formatNumberAbbreviated(summaryTotals.total2025)}</td>
-                        case 'cash2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200">{formatNumberAbbreviated(summaryTotals.totalCash2025)}</td>
-                        case 'credit2025': return <td key={h.key} className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(summaryTotals.totalCredit2025)}</td>
-                        case 'cashContribution2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200">{summaryTotals.total2025 > 0 ? `${((summaryTotals.totalCash2025 / summaryTotals.total2025) * 100).toFixed(1)}%` : '-'}</td>
+                        case 'sales2026': return <td key={h.key} className="p-4 text-right text-green-300">{formatNumberAbbreviated(summaryTotals.total2026)}</td>
+                        case 'cash2026': return <td key={h.key} className="p-4 text-right text-xs text-sky-200">{formatNumberAbbreviated(summaryTotals.totalCash2026)}</td>
+                        case 'credit2026': return <td key={h.key} className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(summaryTotals.totalCredit2026)}</td>
+                        case 'cashContribution2026': return <td key={h.key} className="p-4 text-right text-xs text-sky-200">{summaryTotals.total2026 > 0 ? `${((summaryTotals.totalCash2026 / summaryTotals.total2026) * 100).toFixed(1)}%` : '-'}</td>
 
-                        case 'sales2024': return <td key={h.key} className="p-4 text-right text-slate-300">{formatNumberAbbreviated(summaryTotals.total2024)}</td>
-                        case 'cash2024': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(summaryTotals.totalCash2024)}</td>
-                        case 'credit2024': return <td key={h.key} className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(summaryTotals.totalCredit2024)}</td>
-                        case 'cashContribution2024': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{summaryTotals.total2024 > 0 ? `${((summaryTotals.totalCash2024 / summaryTotals.total2024) * 100).toFixed(1)}%` : '-'}</td>
+                        case 'sales2025': return <td key={h.key} className="p-4 text-right text-slate-300">{formatNumberAbbreviated(summaryTotals.total2025)}</td>
+                        case 'cash2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(summaryTotals.totalCash2025)}</td>
+                        case 'credit2025': return <td key={h.key} className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(summaryTotals.totalCredit2025)}</td>
+                        case 'cashContribution2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{summaryTotals.total2025 > 0 ? `${((summaryTotals.totalCash2025 / summaryTotals.total2025) * 100).toFixed(1)}%` : '-'}</td>
 
                         case 'growth': return <td key={h.key} className="p-4 text-right"><GrowthIndicator value={summaryTotals.growth} /></td>
 
                         // Average or Total growth for subsets? Usually not additive. Leave blank or calc weighted avg.
                         case 'cashGrowth': {
-                            const val = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.totalCash2025, summaryTotals.totalCash2024);
+                            const val = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.totalCash2026, summaryTotals.totalCash2025);
                             return <td key={h.key} className="p-4 text-right text-xs text-sky-200"><GrowthIndicator value={val} /></td>
                         }
                         case 'creditGrowth': {
-                            const val = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.totalCredit2025, summaryTotals.totalCredit2024);
+                            const val = ((current, previous) => previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100)(summaryTotals.totalCredit2026, summaryTotals.totalCredit2025);
                             return <td key={h.key} className="p-4 text-right text-xs text-orange-200"><GrowthIndicator value={val} /></td>
                         }
 
@@ -706,29 +706,29 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
     const chartData = useMemo(() => {
         if (viewType !== 'divisions') return [];
         return processedData.map(d => {
+            let val26 = d.sales2026 || 0;
             let val25 = d.sales2025 || 0;
-            let val24 = d.sales2024 || 0;
             let grw = d.growth || 0;
-            let tot25 = summaryTotals.total2025;
+            let tot26 = summaryTotals.total2026;
             
             if (saleType === 'CASH') {
+                val26 = d.cash2026 || 0;
                 val25 = d.cash2025 || 0;
-                val24 = d.cash2024 || 0;
                 grw = d.cashGrowth || 0;
-                tot25 = summaryTotals.totalCash2025;
+                tot26 = summaryTotals.totalCash2026;
             } else if (saleType === 'CREDIT') {
+                val26 = d.credit2026 || 0;
                 val25 = d.credit2025 || 0;
-                val24 = d.credit2024 || 0;
                 grw = d.creditGrowth || 0;
-                tot25 = summaryTotals.totalCredit2025;
+                tot26 = summaryTotals.totalCredit2026;
             }
 
             return {
                 name: d.name,
-                value: val25,
-                sales2024: val24,
+                value: val26,
+                sales2025: val25,
                 growth: grw,
-                totalForContribution: tot25
+                totalForContribution: tot26
             };
         }).filter(d => d.value > 0);
     }, [viewType, processedData, saleType, summaryTotals]);
@@ -742,12 +742,12 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                     <p className="font-bold text-white mb-2 text-lg border-b border-slate-700 pb-1">{data.name}</p>
                     <div className="space-y-1">
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-400">2025 {prefix}Sales:</span>
+                            <span className="text-slate-400">2026 {prefix}Sales:</span>
                             <span className="text-green-400 font-bold">{formatNumberAbbreviated(data.value)}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-400">2024 {prefix}Sales:</span>
-                            <span className="text-blue-400 font-bold">{formatNumberAbbreviated(data.sales2024)}</span>
+                            <span className="text-slate-400">2025 {prefix}Sales:</span>
+                            <span className="text-blue-400 font-bold">{formatNumberAbbreviated(data.sales2025)}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-slate-700">
                             <span className="text-slate-400">Growth:</span>
@@ -811,9 +811,9 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                         <div className="text-sm font-bold text-slate-400 uppercase">Filtered / Total {entityTypeLabel}</div>
                         <div className="text-2xl font-extrabold text-white">
                             {summaryTotals.count.toLocaleString()}
-                            {viewType === 'branches' && globalData?.branchCount2025 ? ` / ${globalData.branchCount2025}` : ''}
-                            {viewType === 'brands' && globalData?.brandCount2025 ? ` / ${globalData.brandCount2025}` : ''}
-                            {viewType === 'items' && globalData?.itemCount2025 ? ` / ${globalData.itemCount2025}` : ''}
+                            {viewType === 'branches' && globalData?.branchCount2026 ? ` / ${globalData.branchCount2026}` : ''}
+                            {viewType === 'brands' && globalData?.brandCount2026 ? ` / ${globalData.brandCount2026}` : ''}
+                            {viewType === 'items' && globalData?.itemCount2026 ? ` / ${globalData.itemCount2026}` : ''}
                         </div>
                     </div>
                     {performanceRateStats !== null && (
@@ -826,19 +826,19 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                     <div className="bg-slate-700/50 p-4 rounded-lg">
                         <div className="text-sm font-bold text-slate-400 uppercase">% Sales (Filtered)</div>
                         <div className="text-2xl font-extrabold text-green-400">
-                            {globalData?.totalSales2025 && globalData.totalSales2025 > 0 ? ((summaryTotals.total2025 / globalData.totalSales2025) * 100).toFixed(1) + '%' : '-'}
+                            {globalData?.totalSales2026 && globalData.totalSales2026 > 0 ? ((summaryTotals.total2026 / globalData.totalSales2026) * 100).toFixed(1) + '%' : '-'}
                         </div>
                         <div className="text-sm font-bold text-slate-400">
-                            2024: {globalData?.totalSales2024 && globalData.totalSales2024 > 0 ? ((summaryTotals.total2024 / globalData.totalSales2024) * 100).toFixed(1) + '%' : '-'}
+                            2025: {globalData?.totalSales2025 && globalData.totalSales2025 > 0 ? ((summaryTotals.total2025 / globalData.totalSales2025) * 100).toFixed(1) + '%' : '-'}
                         </div>
+                    </div>
+                    <div className="bg-slate-700/50 p-4 rounded-lg">
+                        <div className="text-sm font-bold text-slate-400 uppercase">2026 Sales</div>
+                        <div className="text-2xl font-extrabold text-green-400">{formatNumberAbbreviated(summaryTotals.total2026)}</div>
                     </div>
                     <div className="bg-slate-700/50 p-4 rounded-lg">
                         <div className="text-sm font-bold text-slate-400 uppercase">2025 Sales</div>
-                        <div className="text-2xl font-extrabold text-green-400">{formatNumberAbbreviated(summaryTotals.total2025)}</div>
-                    </div>
-                    <div className="bg-slate-700/50 p-4 rounded-lg">
-                        <div className="text-sm font-bold text-slate-400 uppercase">2024 Sales</div>
-                        <div className="text-2xl font-extrabold text-slate-300">{formatNumberAbbreviated(summaryTotals.total2024)}</div>
+                        <div className="text-2xl font-extrabold text-slate-300">{formatNumberAbbreviated(summaryTotals.total2025)}</div>
                     </div>
                     <div className="bg-slate-700/50 p-4 rounded-lg">
                         <div className="text-sm font-bold text-slate-400 uppercase">Overall Growth</div>
@@ -850,7 +850,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
             {/* Chart Section for Divisions */}
             {viewType === 'divisions' && chartData.length > 0 && (
                 <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 shadow-xl">
-                    <h3 className="text-xl font-bold text-white mb-6 text-center">Sales Distribution by Division (2025)</h3>
+                    <h3 className="text-xl font-bold text-white mb-6 text-center">Sales Distribution by Division (2026)</h3>
                     <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

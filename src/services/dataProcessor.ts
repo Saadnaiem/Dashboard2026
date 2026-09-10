@@ -6,10 +6,10 @@ export const normalizeRow = (row: Record<string, string>, headers: string[]): Ra
         'DIVISION', 'DEPARTMENT', 'CATEGORY', 'SUBCATEGORY', 'CLASS',
         'BRAND', 'BRANCH NAME', 'BRANCH CODE', 'ITEM CODE', 'ITEM DESCRIPTION',
         'TYPE', 'TYPE Plus',
-        '2024 CASH SALES', '2024 CREDIT SALES', '2024 TOTAL SALES',
         '2025 CASH SALES', '2025 CREDIT SALES', '2025 TOTAL SALES',
+        '2026 CASH SALES', '2026 CREDIT SALES', '2026 TOTAL SALES',
         // Legacy maps if needed, but we focus on new ones. 
-        'SALES2024', 'SALES2025'
+        'SALES2025', 'SALES2026'
     ];
 
     const findHeader = (target: string) => {
@@ -55,8 +55,8 @@ export const normalizeRow = (row: Record<string, string>, headers: string[]): Ra
         }
     }
 
-    // Map legacy SALES2024/2025 if they exist and the new ones don't, or vice-versa logic if needed.
-    // Logic: If '2024 TOTAL SALES' is 0 but 'SALES2024' exists, maybe use that. 
+    // Map legacy SALES2025/2026 if they exist and the new ones don't, or vice-versa logic if needed.
+    // Logic: If '2025 TOTAL SALES' is 0 but 'SALES2025' exists, maybe use that. 
     // BUT we trust the user's new file structure. 
     // We strictly map the new columns to the interface fields.
 
@@ -111,24 +111,24 @@ const calculatePareto = (salesData: { name: string, sales: number }[]): { result
 
 // Accumulator interface
 interface SalesAgg {
-    s24_total: number;
-    s24_cash: number;
-    s24_credit: number;
     s25_total: number;
     s25_cash: number;
     s25_credit: number;
+    s26_total: number;
+    s26_cash: number;
+    s26_credit: number;
     code?: string;
 }
 
 export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?: ProcessedData['filterOptions'], saleType: 'ALL' | 'CASH' | 'CREDIT' = 'ALL'): ProcessedData => {
     if (data.length === 0) return null as any;
 
-    let totalSales2024 = 0;
     let totalSales2025 = 0;
-    let totalCashSales2024 = 0;
+    let totalSales2026 = 0;
     let totalCashSales2025 = 0;
-    let totalCreditSales2024 = 0;
+    let totalCashSales2026 = 0;
     let totalCreditSales2025 = 0;
+    let totalCreditSales2026 = 0;
 
     // Aggregators for all dimensions
     const divisions: { [key: string]: SalesAgg } = {};
@@ -143,44 +143,44 @@ export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?
     const typePluses: { [key: string]: SalesAgg } = {};
 
     const distinct = {
-        branches24: new Set<string>(), branches25: new Set<string>(),
-        brands24: new Set<string>(), brands25: new Set<string>(),
-        items24: new Set<string>(), items25: new Set<string>(),
+        branches25: new Set<string>(), branches26: new Set<string>(),
+        brands25: new Set<string>(), brands26: new Set<string>(),
+        items25: new Set<string>(), items26: new Set<string>(),
     };
 
     data.forEach(row => {
         // Extract metrics
-        const cash24 = row['2024 CASH SALES'] || 0;
-        const credit24 = row['2024 CREDIT SALES'] || 0;
-        const total24 = row['2024 TOTAL SALES'] || (cash24 + credit24) || row['SALES2024'] || 0;
-
         const cash25 = row['2025 CASH SALES'] || 0;
         const credit25 = row['2025 CREDIT SALES'] || 0;
         const total25 = row['2025 TOTAL SALES'] || (cash25 + credit25) || row['SALES2025'] || 0;
 
-        totalSales2024 += total24;
+        const cash26 = row['2026 CASH SALES'] || 0;
+        const credit26 = row['2026 CREDIT SALES'] || 0;
+        const total26 = row['2026 TOTAL SALES'] || (cash26 + credit26) || row['SALES2026'] || 0;
+
         totalSales2025 += total25;
-        totalCashSales2024 += cash24;
+        totalSales2026 += total26;
         totalCashSales2025 += cash25;
-        totalCreditSales2024 += credit24;
+        totalCashSales2026 += cash26;
         totalCreditSales2025 += credit25;
+        totalCreditSales2026 += credit26;
 
         // Generic aggregator function
         const aggregate = (store: { [key: string]: SalesAgg }, key: string, code?: string) => {
             if (!key) return;
             if (!store[key]) {
                 store[key] = {
-                    s24_total: 0, s24_cash: 0, s24_credit: 0,
                     s25_total: 0, s25_cash: 0, s25_credit: 0,
+                    s26_total: 0, s26_cash: 0, s26_credit: 0,
                     code: code
                 };
             }
-            store[key].s24_total += total24;
-            store[key].s24_cash += cash24;
-            store[key].s24_credit += credit24;
             store[key].s25_total += total25;
             store[key].s25_cash += cash25;
             store[key].s25_credit += credit25;
+            store[key].s26_total += total26;
+            store[key].s26_cash += cash26;
+            store[key].s26_credit += credit26;
         };
 
         aggregate(divisions, row['DIVISION']);
@@ -195,81 +195,81 @@ export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?
         aggregate(typePluses, row['TYPE Plus'] || '');
 
         // Distinct counting for KPIs (using filtered Sales > 0 as active criteria)
-        const active24 = saleType === 'ALL' ? total24 : (saleType === 'CASH' ? cash24 : credit24);
         const active25 = saleType === 'ALL' ? total25 : (saleType === 'CASH' ? cash25 : credit25);
+        const active26 = saleType === 'ALL' ? total26 : (saleType === 'CASH' ? cash26 : credit26);
 
         if (row['BRANCH NAME']) {
-            if (active24 > 0) distinct.branches24.add(row['BRANCH NAME']);
             if (active25 > 0) distinct.branches25.add(row['BRANCH NAME']);
+            if (active26 > 0) distinct.branches26.add(row['BRANCH NAME']);
         }
         if (row['BRAND']) {
-            if (active24 > 0) distinct.brands24.add(row['BRAND']);
             if (active25 > 0) distinct.brands25.add(row['BRAND']);
+            if (active26 > 0) distinct.brands26.add(row['BRAND']);
         }
         if (row['ITEM DESCRIPTION']) {
-            if (active24 > 0) distinct.items24.add(row['ITEM DESCRIPTION']);
             if (active25 > 0) distinct.items25.add(row['ITEM DESCRIPTION']);
+            if (active26 > 0) distinct.items26.add(row['ITEM DESCRIPTION']);
         }
     });
 
     const calculateGrowth = (current: number, previous: number) =>
         previous === 0 ? (current > 0 ? Infinity : 0) : ((current - previous) / previous) * 100;
 
-    const finalTotalSales2024 = saleType === 'ALL' ? totalSales2024 : (saleType === 'CASH' ? totalCashSales2024 : totalCreditSales2024);
     const finalTotalSales2025 = saleType === 'ALL' ? totalSales2025 : (saleType === 'CASH' ? totalCashSales2025 : totalCreditSales2025);
+    const finalTotalSales2026 = saleType === 'ALL' ? totalSales2026 : (saleType === 'CASH' ? totalCashSales2026 : totalCreditSales2026);
 
-    const salesGrowthPercentage = calculateGrowth(finalTotalSales2025, finalTotalSales2024);
+    const salesGrowthPercentage = calculateGrowth(finalTotalSales2026, finalTotalSales2025);
 
     const transform = (obj: { [key: string]: SalesAgg }): EntitySalesData[] =>
         Object.entries(obj).map(([name, data]) => {
-            let primarySales24 = data.s24_total;
             let primarySales25 = data.s25_total;
+            let primarySales26 = data.s26_total;
 
             if (saleType === 'CASH') {
-                primarySales24 = data.s24_cash;
                 primarySales25 = data.s25_cash;
+                primarySales26 = data.s26_cash;
             } else if (saleType === 'CREDIT') {
-                primarySales24 = data.s24_credit;
                 primarySales25 = data.s25_credit;
+                primarySales26 = data.s26_credit;
             }
 
             return {
                 name,
-                sales2024: primarySales24,
                 sales2025: primarySales25,
-                cashSales2024: data.s24_cash,
-                creditSales2024: data.s24_credit,
+                sales2026: primarySales26,
                 cashSales2025: data.s25_cash,
                 creditSales2025: data.s25_credit,
-                growth: calculateGrowth(primarySales25, primarySales24),
+                cashSales2026: data.s26_cash,
+                creditSales2026: data.s26_credit,
+                growth: calculateGrowth(primarySales26, primarySales25),
                 code: data.code
             };
         });
 
     // Generate arrays
-    const salesByDivision = transform(divisions).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByDepartment = transform(departments).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByCategory = transform(categories).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesBySubcategory = transform(subcategories).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByClass = transform(classes).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByBrand = transform(brands).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByBranch = transform(branches).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByItem = transform(items).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByType = transform(types).sort((a, b) => b.sales2025 - a.sales2025);
-    const salesByTypePlus = transform(typePluses).sort((a, b) => b.sales2025 - a.sales2025);
+    const salesByDivision = transform(divisions).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByDepartment = transform(departments).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByCategory = transform(categories).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesBySubcategory = transform(subcategories).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByClass = transform(classes).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByBrand = transform(brands).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByBranch = transform(branches).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByItem = transform(items).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByType = transform(types).sort((a, b) => b.sales2026 - a.sales2026);
+    const salesByTypePlus = transform(typePluses).sort((a, b) => b.sales2026 - a.sales2026);
 
-    const top10Brands = salesByBrand.slice(0, 10).map(({ name, sales2024, sales2025 }) => ({ name, sales2024, sales2025 }));
-    const top50Items = salesByItem.slice(0, 50).map(({ name, sales2024, sales2025 }) => ({ name, sales2024, sales2025 }));
+    const top10Brands = salesByBrand.slice(0, 10).map(({ name, sales2025, sales2026 }) => ({ name, sales2025, sales2026 }));
+    const top50Items = salesByItem.slice(0, 50).map(({ name, sales2025, sales2026 }) => ({ name, sales2025, sales2026 }));
     const topDivision = salesByDivision[0] || null;
 
-    // Pareto (using Total Sales 2025)
+    // Pareto (using Total Sales 2026)
     // FIX: Use filtered sales for Pareto too? The user said "all charts and cards... filtered". 
     // Pareto usually implies importance. If I filter for Cash, I probably want Pareto of Cash.
-    // The previous code passed `i.sales2025` which comes from `salesBy...` which IS already transformed/filtered.
+    // The previous code passed `i.sales2026` which comes from `salesBy...` which IS already transformed/filtered.
     // SO Pareto is already correct.
-    const paretoBranches = calculatePareto(salesByBranch.map(i => ({ name: i.name, sales: i.sales2025 })));
-    const paretoBrands = calculatePareto(salesByBrand.map(i => ({ name: i.name, sales: i.sales2025 })));
-    const paretoItems = calculatePareto(salesByItem.map(i => ({ name: i.name, sales: i.sales2025 })));
+    const paretoBranches = calculatePareto(salesByBranch.map(i => ({ name: i.name, sales: i.sales2026 })));
+    const paretoBrands = calculatePareto(salesByBrand.map(i => ({ name: i.name, sales: i.sales2026 })));
+    const paretoItems = calculatePareto(salesByItem.map(i => ({ name: i.name, sales: i.sales2026 })));
 
     // Contributors mapping
     const paretoContributors = {
@@ -280,62 +280,62 @@ export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?
 
     // New/Lost entities (Logic uses total sales)
     // FIX: Should use filtered sales.
-    // The current implementation uses: `x.sales2025 > 0`. `x.sales2025` is transformed/filtered.
+    // The current implementation uses: `x.sales2026 > 0`. `x.sales2026` is transformed/filtered.
     // So `salesByBranch` has filtered sales.
-    // `newBranchesSales` sum uses `curr.sales2025`. Correct.
-    // `percentOfTotal` uses `totalSales2025` (the raw variable). This is WRONG if we want % of *filtered* total.
-    // I need to use `finalTotalSales2025`.
+    // `newBranchesSales` sum uses `curr.sales2026`. Correct.
+    // `percentOfTotal` uses `totalSales2026` (the raw variable). This is WRONG if we want % of *filtered* total.
+    // I need to use `finalTotalSales2026`.
 
     // Calculating New Entities
-    const newBranchNames = salesByBranch.filter(x => x.sales2025 > 0 && x.sales2024 === 0);
-    const newBranchesSales = newBranchNames.reduce((acc, curr) => acc + curr.sales2025, 0);
+    const newBranchNames = salesByBranch.filter(x => x.sales2026 > 0 && x.sales2025 === 0);
+    const newBranchesSales = newBranchNames.reduce((acc, curr) => acc + curr.sales2026, 0);
     const newBranches = {
         count: newBranchNames.length,
         sales: newBranchesSales,
-        percentOfTotal: finalTotalSales2025 > 0 ? (newBranchesSales / finalTotalSales2025) * 100 : 0
+        percentOfTotal: finalTotalSales2026 > 0 ? (newBranchesSales / finalTotalSales2026) * 100 : 0
     };
 
-    const newBrandsListFull = salesByBrand.filter(x => x.sales2025 > 0 && x.sales2024 === 0);
-    const newBrandsSales = newBrandsListFull.reduce((acc, curr) => acc + curr.sales2025, 0);
+    const newBrandsListFull = salesByBrand.filter(x => x.sales2026 > 0 && x.sales2025 === 0);
+    const newBrandsSales = newBrandsListFull.reduce((acc, curr) => acc + curr.sales2026, 0);
     const newBrands = {
         count: newBrandsListFull.length,
         sales: newBrandsSales,
-        percentOfTotal: finalTotalSales2025 > 0 ? (newBrandsSales / finalTotalSales2025) * 100 : 0
+        percentOfTotal: finalTotalSales2026 > 0 ? (newBrandsSales / finalTotalSales2026) * 100 : 0
     };
 
-    const newItemsListFull = salesByItem.filter(x => x.sales2025 > 0 && x.sales2024 === 0);
-    const newItemsSales = newItemsListFull.reduce((acc, curr) => acc + curr.sales2025, 0);
+    const newItemsListFull = salesByItem.filter(x => x.sales2026 > 0 && x.sales2025 === 0);
+    const newItemsSales = newItemsListFull.reduce((acc, curr) => acc + curr.sales2026, 0);
     const newItems = {
         count: newItemsListFull.length,
         sales: newItemsSales,
-        percentOfTotal: finalTotalSales2025 > 0 ? (newItemsSales / finalTotalSales2025) * 100 : 0
+        percentOfTotal: finalTotalSales2026 > 0 ? (newItemsSales / finalTotalSales2026) * 100 : 0
     };
 
     // Calculating Lost Entities
-    const lostBrandsListFull = salesByBrand.filter(x => x.sales2024 > 0 && x.sales2025 === 0);
-    const lostBrandsSales = lostBrandsListFull.reduce((acc, curr) => acc + curr.sales2024, 0);
+    const lostBrandsListFull = salesByBrand.filter(x => x.sales2025 > 0 && x.sales2026 === 0);
+    const lostBrandsSales = lostBrandsListFull.reduce((acc, curr) => acc + curr.sales2025, 0);
     const lostBrands = {
         count: lostBrandsListFull.length,
-        sales2024: lostBrandsSales,
-        percentOfTotal: finalTotalSales2024 > 0 ? (lostBrandsSales / finalTotalSales2024) * 100 : 0
+        sales2025: lostBrandsSales,
+        percentOfTotal: finalTotalSales2025 > 0 ? (lostBrandsSales / finalTotalSales2025) * 100 : 0
     };
 
-    const lostItemsListFull = salesByItem.filter(x => x.sales2024 > 0 && x.sales2025 === 0);
-    const lostItemsSales = lostItemsListFull.reduce((acc, curr) => acc + curr.sales2024, 0);
+    const lostItemsListFull = salesByItem.filter(x => x.sales2025 > 0 && x.sales2026 === 0);
+    const lostItemsSales = lostItemsListFull.reduce((acc, curr) => acc + curr.sales2025, 0);
     const lostItems = {
         count: lostItemsListFull.length,
-        sales2024: lostItemsSales,
-        percentOfTotal: finalTotalSales2024 > 0 ? (lostItemsSales / finalTotalSales2024) * 100 : 0
+        sales2025: lostItemsSales,
+        percentOfTotal: finalTotalSales2025 > 0 ? (lostItemsSales / finalTotalSales2025) * 100 : 0
     };
 
     return {
         // We will return totalSales based on filter for general charts, but also expose the raw totals explicitly.
-        totalSales2024: finalTotalSales2024,
         totalSales2025: finalTotalSales2025,
-        totalCashSales2024: saleType === 'CREDIT' ? 0 : totalCashSales2024,
+        totalSales2026: finalTotalSales2026,
         totalCashSales2025: saleType === 'CREDIT' ? 0 : totalCashSales2025,
-        totalCreditSales2024: saleType === 'CASH' ? 0 : totalCreditSales2024,
+        totalCashSales2026: saleType === 'CREDIT' ? 0 : totalCashSales2026,
         totalCreditSales2025: saleType === 'CASH' ? 0 : totalCreditSales2025,
+        totalCreditSales2026: saleType === 'CASH' ? 0 : totalCreditSales2026,
         salesGrowthPercentage,
         salesByDivision,
         salesByDepartment,
@@ -350,12 +350,12 @@ export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?
         top10Brands,
         top50Items,
         topDivision,
-        branchCount2024: distinct.branches24.size,
         branchCount2025: distinct.branches25.size,
-        brandCount2024: distinct.brands24.size,
+        branchCount2026: distinct.branches26.size,
         brandCount2025: distinct.brands25.size,
-        itemCount2024: distinct.items24.size,
+        brandCount2026: distinct.brands26.size,
         itemCount2025: distinct.items25.size,
+        itemCount2026: distinct.items26.size,
         pareto: {
             branches: paretoBranches.result,
             brands: paretoBrands.result,
@@ -367,14 +367,14 @@ export const processSalesData = (data: RawSalesDataRow[], existingFilterOptions?
             brands: newBrands,
             items: newItems,
         },
-        newBrandsList: newBrandsListFull.map(x => ({ name: x.name, sales2025: x.sales2025 })),
-        newItemsList: newItemsListFull.map(x => ({ name: x.name, sales2025: x.sales2025, code: x.code || '' })),
+        newBrandsList: newBrandsListFull.map(x => ({ name: x.name, sales2026: x.sales2026 })),
+        newItemsList: newItemsListFull.map(x => ({ name: x.name, sales2026: x.sales2026, code: x.code || '' })),
         lostEntities: {
             brands: lostBrands,
             items: lostItems,
         },
-        lostBrandsList: lostBrandsListFull.map(x => ({ name: x.name, sales2024: x.sales2024 })),
-        lostItemsList: lostItemsListFull.map(x => ({ name: x.name, sales2024: x.sales2024, code: x.code || '' })),
+        lostBrandsList: lostBrandsListFull.map(x => ({ name: x.name, sales2025: x.sales2025 })),
+        lostItemsList: lostItemsListFull.map(x => ({ name: x.name, sales2025: x.sales2025, code: x.code || '' })),
         filterOptions: existingFilterOptions ? {
             ...existingFilterOptions,
             items: (existingFilterOptions as any).items || [...new Set(data.map(r => r['ITEM DESCRIPTION']))].filter((x): x is string => !!x).sort(),

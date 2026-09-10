@@ -13,19 +13,19 @@ export interface RawSalesDataRow {
     'TYPE'?: string;
     'TYPE Plus'?: string;
 
-    // 2024 Metrics
-    '2024 CASH SALES': number;
-    '2024 CREDIT SALES': number;
-    '2024 TOTAL SALES': number;
-
     // 2025 Metrics
     '2025 CASH SALES': number;
     '2025 CREDIT SALES': number;
     '2025 TOTAL SALES': number;
 
+    // 2026 Metrics
+    '2026 CASH SALES': number;
+    '2026 CREDIT SALES': number;
+    '2026 TOTAL SALES': number;
+
     // Legacy support (optional, can be mapped from above)
-    'SALES2024'?: number;
     'SALES2025'?: number;
+    'SALES2026'?: number;
 
     // Search Optimization
     _searchIndex?: string;
@@ -41,26 +41,26 @@ export interface ParetoResult {
 
 export interface EntitySalesData {
     name: string;
-    sales2024: number; // Total Sales 2024
     sales2025: number; // Total Sales 2025
-
-    cashSales2024: number;
-    creditSales2024: number;
+    sales2026: number; // Total Sales 2026
 
     cashSales2025: number;
     creditSales2025: number;
+
+    cashSales2026: number;
+    creditSales2026: number;
 
     growth: number;
     code?: string;
 }
 
 export interface ProcessedData {
-    totalSales2024: number;
     totalSales2025: number;
-    totalCashSales2024: number;
+    totalSales2026: number;
     totalCashSales2025: number;
-    totalCreditSales2024: number;
+    totalCashSales2026: number;
     totalCreditSales2025: number;
+    totalCreditSales2026: number;
     salesGrowthPercentage: number;
 
     salesByDivision: EntitySalesData[];
@@ -74,17 +74,17 @@ export interface ProcessedData {
     salesByType: EntitySalesData[];
     salesByTypePlus: EntitySalesData[];
 
-    top10Brands: { name: string; sales2024: number; sales2025: number }[];
-    top50Items: { name: string; sales2024: number; sales2025: number }[];
+    top10Brands: { name: string; sales2025: number; sales2026: number }[];
+    top50Items: { name: string; sales2025: number; sales2026: number }[];
 
-    branchCount2024: number;
     branchCount2025: number;
-    brandCount2024: number;
+    branchCount2026: number;
     brandCount2025: number;
-    itemCount2024: number;
+    brandCount2026: number;
     itemCount2025: number;
+    itemCount2026: number;
 
-    topDivision: { name: string; sales2024: number; sales2025: number; growth: number; } | null;
+    topDivision: { name: string; sales2025: number; sales2026: number; growth: number; } | null;
 
     pareto: {
         branches: ParetoResult;
@@ -104,16 +104,16 @@ export interface ProcessedData {
         items: { count: number; sales: number; percentOfTotal: number };
     };
 
-    newBrandsList: { name: string; sales2025: number }[];
-    newItemsList: { name: string; sales2025: number; code: string }[];
+    newBrandsList: { name: string; sales2026: number }[];
+    newItemsList: { name: string; sales2026: number; code: string }[];
 
     lostEntities: {
-        brands: { count: number; sales2024: number; percentOfTotal: number };
-        items: { count: number; sales2024: number; percentOfTotal: number };
+        brands: { count: number; sales2025: number; percentOfTotal: number };
+        items: { count: number; sales2025: number; percentOfTotal: number };
     };
 
-    lostBrandsList: { name: string; sales2024: number }[];
-    lostItemsList: { name: string; sales2024: number; code: string }[];
+    lostBrandsList: { name: string; sales2025: number }[];
+    lostItemsList: { name: string; sales2025: number; code: string }[];
 
     filterOptions: {
         divisions: string[];

@@ -31,10 +31,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-700 p-4 rounded-lg shadow-lg">
                 <p className="font-bold text-green-300 mb-2">{finalLabel}</p>
                 
-                {itemPayload.sales2024 !== undefined && itemPayload.sales2025 !== undefined ? (
+                {itemPayload.sales2025 !== undefined && itemPayload.sales2026 !== undefined ? (
                     <>
-                        <div style={{ color: COLORS.teal }}>2025 Sales: {formatNumber(itemPayload.sales2025)}</div>
-                        <div style={{ color: COLORS.blue }}>2024 Sales: {formatNumber(itemPayload.sales2024)}</div>
+                        <div style={{ color: COLORS.teal }}>2026 Sales: {formatNumber(itemPayload.sales2026)}</div>
+                        <div style={{ color: COLORS.blue }}>2025 Sales: {formatNumber(itemPayload.sales2025)}</div>
                          {itemPayload.growth !== undefined && (
                              <div className={itemPayload.growth >= 0 ? 'text-green-400' : 'text-red-400'}>
                                  Growth: {itemPayload.growth === Infinity ? 'New' : `${itemPayload.growth.toFixed(2)}%`}
@@ -59,8 +59,8 @@ const renderActiveShape = (props: any) => {
 
     if (!payload) return null;
 
-    const { sales2024, sales2025 } = payload;
-    const growth = sales2024 === 0 ? (sales2025 > 0 ? Infinity : 0) : ((sales2025 - sales2024) / sales2024) * 100;
+    const { sales2025, sales2026 } = payload;
+    const growth = sales2025 === 0 ? (sales2026 > 0 ? Infinity : 0) : ((sales2026 - sales2025) / sales2025) * 100;
     const growthColor = growth >= 0 ? COLORS.green : COLORS.red;
     const growthIcon = growth >= 0 ? '▲' : '▼';
     const growthText = growth === Infinity ? 'New' : `${growthIcon} ${Math.abs(growth).toFixed(1)}%`;
@@ -71,10 +71,10 @@ const renderActiveShape = (props: any) => {
                 {payload.name}
             </text>
             <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill="#e5e7eb" className="text-base font-semibold">
-                {`2025: ${formatNumber(payload.sales2025)} (${(percent * 100).toFixed(1)}%)`}
+                {`2026: ${formatNumber(payload.sales2026)} (${(percent * 100).toFixed(1)}%)`}
             </text>
             <text x={cx} y={cy + 15} dy={8} textAnchor="middle" fill="#9ca3af" className="text-sm font-medium">
-                {`2024: ${formatNumber(payload.sales2024)}`}
+                {`2025: ${formatNumber(payload.sales2025)}`}
             </text>
             <text x={cx} y={cy + 40} dy={8} textAnchor="middle" fill={growthColor} className="text-base font-bold">
                 {growthText}
@@ -93,7 +93,7 @@ const renderActiveShape = (props: any) => {
 };
 
 const RADIAN = Math.PI / 180;
-const renderDonutLabel = ({ cx, cy, midAngle, outerRadius, percent, name, sales2024, sales2025 }: any) => {
+const renderDonutLabel = ({ cx, cy, midAngle, outerRadius, percent, name, sales2025, sales2026 }: any) => {
     const radius = outerRadius + 25; // Position label outside the pie
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -101,7 +101,7 @@ const renderDonutLabel = ({ cx, cy, midAngle, outerRadius, percent, name, sales2
 
     if (percent < 0.03) return null; // Don't render labels for tiny slices
 
-    const growth = sales2024 === 0 ? (sales2025 > 0 ? Infinity : 0) : ((sales2025 - sales2024) / sales2024) * 100;
+    const growth = sales2025 === 0 ? (sales2026 > 0 ? Infinity : 0) : ((sales2026 - sales2025) / sales2025) * 100;
     let growthText = '';
     let growthColor = 'white';
 
@@ -206,8 +206,8 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
     };
     
     const yearComparisonData = [
-        { name: '2024', value: data.totalSales2024, sales2024: data.totalSales2024, sales2025: 0 },
-        { name: '2025', value: data.totalSales2025, sales2024: 0, sales2025: data.totalSales2025 },
+        { name: '2025', value: data.totalSales2025, sales2025: data.totalSales2025, sales2026: 0 },
+        { name: '2026', value: data.totalSales2026, sales2025: 0, sales2026: data.totalSales2026 },
     ];
     
     const yoyGrowth = data.salesGrowthPercentage;
@@ -220,18 +220,18 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
 
     const top10BrandsSorted = useMemo(() => 
         [...data.top10Brands]
-            .map(brand => ({ ...brand, growth: calculateGrowth(brand.sales2025, brand.sales2024) }))
-            .sort((a, b) => b.sales2025 - a.sales2025),
+            .map(brand => ({ ...brand, growth: calculateGrowth(brand.sales2026, brand.sales2025) }))
+            .sort((a, b) => b.sales2026 - a.sales2026),
     [data.top10Brands]);
 
     const allBranchesSorted = useMemo(() =>
-        [...data.salesByBranch].sort((a, b) => b.sales2025 - a.sales2025),
+        [...data.salesByBranch].sort((a, b) => b.sales2026 - a.sales2026),
     [data.salesByBranch]);
     
     const top50ItemsSorted = useMemo(() => 
         [...data.top50Items]
-            .map(item => ({ ...item, growth: calculateGrowth(item.sales2025, item.sales2024) }))
-            .sort((a, b) => b.sales2025 - a.sales2025),
+            .map(item => ({ ...item, growth: calculateGrowth(item.sales2026, item.sales2025) }))
+            .sort((a, b) => b.sales2026 - a.sales2026),
     [data.top50Items]);
 
     // Calculate dynamic height for the branch charts to prevent label overlap
@@ -249,7 +249,7 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
         cy: "50%",
         innerRadius: 100,
         outerRadius: 140,
-        dataKey: "sales2025",
+        dataKey: "sales2026",
         onMouseEnter: onPieEnter,
         onClick: handleDonutClick,
         className: "cursor-pointer",
@@ -288,7 +288,7 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                 </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Sales by Division (2025)">
+            <ChartCard title="Sales by Division (2026)">
                 <ResponsiveContainer width="100%" height={400}>
                     <PieChart 
                         margin={{ top: 30, right: 30, bottom: 30, left: 30 }}
@@ -304,7 +304,7 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                 </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Top 10 Brands by 2025 Sales" className="lg:col-span-2">
+            <ChartCard title="Top 10 Brands by 2026 Sales" className="lg:col-span-2">
                 <div className="w-full overflow-x-auto">
                     <ResponsiveContainer width="100%" height={400} minWidth={600}>
                         <BarChart 
@@ -318,8 +318,8 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                             <YAxis type="category" dataKey="name" stroke="white" width={100} tick={{ fontSize: 12, fill: 'white', fontWeight: 'bold' }} interval={0} />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend formatter={renderLegendText} />
-                            <Bar dataKey="sales2024" name="2024" fill={COLORS.blue} onClick={(payload) => handleBarClick('brands', payload)} />
-                            <Bar dataKey="sales2025" name="2025" fill={COLORS.green} onClick={(payload) => handleBarClick('brands', payload)}>
+                            <Bar dataKey="sales2025" name="2025" fill={COLORS.blue} onClick={(payload) => handleBarClick('brands', payload)} />
+                            <Bar dataKey="sales2026" name="2026" fill={COLORS.green} onClick={(payload) => handleBarClick('brands', payload)}>
                                 <LabelList dataKey="growth" content={renderGrowthLabel} />
                             </Bar>
                         </BarChart>
@@ -327,7 +327,7 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                 </div>
             </ChartCard>
 
-            <ChartCard title="Top 50 Items by 2025 Sales" className="lg:col-span-2">
+            <ChartCard title="Top 50 Items by 2026 Sales" className="lg:col-span-2">
                 <div className="w-full overflow-x-auto">
                     <ResponsiveContainer width="100%" height={top50ItemsChartHeight} minWidth={600}>
                         <BarChart 
@@ -341,8 +341,8 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                             <YAxis type="category" dataKey="name" stroke="white" width={250} tick={{ fontSize: 12, fill: 'white', fontWeight: 'bold' }} interval={0} />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend formatter={renderLegendText} />
-                            <Bar dataKey="sales2024" name="2024" fill={COLORS.blue} onClick={(payload) => handleBarClick('items', payload)} />
-                            <Bar dataKey="sales2025" name="2025" fill={COLORS.green} onClick={(payload) => handleBarClick('items', payload)}>
+                            <Bar dataKey="sales2025" name="2025" fill={COLORS.blue} onClick={(payload) => handleBarClick('items', payload)} />
+                            <Bar dataKey="sales2026" name="2026" fill={COLORS.green} onClick={(payload) => handleBarClick('items', payload)}>
                                 <LabelList dataKey="growth" content={renderGrowthLabel} />
                             </Bar>
                         </BarChart>
@@ -364,8 +364,8 @@ const Charts: React.FC<ChartsProps> = ({ data, onFilterChange }) => {
                             <YAxis type="category" dataKey="name" stroke="white" width={150} tick={{ fontSize: 12, fill: 'white', fontWeight: 'bold' }} interval={0} />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend formatter={renderLegendText} />
-                            <Bar dataKey="sales2024" name="2024" fill={COLORS.blue} onClick={(payload) => handleBarClick('branches', payload)} />
-                            <Bar dataKey="sales2025" name="2025" fill={COLORS.green} onClick={(payload) => handleBarClick('branches', payload)}>
+                            <Bar dataKey="sales2025" name="2025" fill={COLORS.blue} onClick={(payload) => handleBarClick('branches', payload)} />
+                            <Bar dataKey="sales2026" name="2026" fill={COLORS.green} onClick={(payload) => handleBarClick('branches', payload)}>
                                 <LabelList dataKey="growth" content={renderGrowthLabel} />
                             </Bar>
                         </BarChart>
