@@ -929,7 +929,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                                     onChange={(e) => setFilterSearch(prev => ({ ...prev, division: e.target.value }))}
                                 />
                                 <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
-                                    {globalFilterOptions.divisions.filter(o => o.toLowerCase().includes(filterSearch.division.toLowerCase())).map(opt => (
+                                    {globalFilterOptions.divisions.filter(o => o && String(o).toLowerCase().includes(String(filterSearch.division || '').toLowerCase())).map(opt => (
                                         <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                             <input type="checkbox" checked={localFilters.division.includes(opt)} onChange={() => toggleFilter('division', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                             <span className="text-slate-300 text-sm leading-tight">{opt}</span>
@@ -949,7 +949,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                                     onChange={(e) => setFilterSearch(prev => ({ ...prev, branch: e.target.value }))}
                                 />
                                 <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
-                                    {availableBranches.filter(o => o.toLowerCase().includes(filterSearch.branch.toLowerCase())).map(opt => (
+                                    {availableBranches.filter(o => o && String(o).toLowerCase().includes(String(filterSearch.branch || '').toLowerCase())).map(opt => (
                                         <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                             <input type="checkbox" checked={localFilters.branch.includes(opt)} onChange={() => toggleFilter('branch', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                             <span className="text-slate-300 text-sm leading-tight">{opt}</span>
@@ -969,7 +969,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                                     onChange={(e) => setFilterSearch(prev => ({ ...prev, brand: e.target.value }))}
                                 />
                                 <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
-                                    {availableBrands.filter(o => o.toLowerCase().includes(filterSearch.brand.toLowerCase())).map(opt => (
+                                    {availableBrands.filter(o => o && String(o).toLowerCase().includes(String(filterSearch.brand || '').toLowerCase())).map(opt => (
                                         <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                             <input type="checkbox" checked={localFilters.brand.includes(opt)} onChange={() => toggleFilter('brand', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                             <span className="text-slate-300 text-sm leading-tight">{opt}</span>
@@ -991,7 +991,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                             />
                             <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
                                 {/* Using 50 cap to avoid explosive rendering, filtered by search */}
-                                {Array.from(new Set(allRawData.map(r => r['ITEM DESCRIPTION']))).filter(o => o && o.toLowerCase().includes(filterSearch.item.toLowerCase())).slice(0, 100).map(opt => (
+                                {Array.from(new Set(allRawData.map(r => r['ITEM DESCRIPTION']))).filter(o => o && String(o).toLowerCase().includes(String(filterSearch.item || '').toLowerCase())).slice(0, 100).map(opt => (
                                     <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                         <input type="checkbox" checked={localFilters.item.includes(opt)} onChange={() => toggleFilter('item', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                         <span className="text-slate-300 text-sm leading-tight truncate" title={opt}>{opt}</span>
@@ -1010,7 +1010,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                                     onChange={(e) => setFilterSearch(prev => ({ ...prev, type: e.target.value }))}
                                 />
                                 <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
-                                    {(globalFilterOptions.types || []).filter(o => o.toLowerCase().includes(filterSearch.type.toLowerCase())).map(opt => (
+                                    {(globalFilterOptions.types || []).filter(o => o && String(o).toLowerCase().includes(String(filterSearch.type || '').toLowerCase())).map(opt => (
                                         <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                             <input type="checkbox" checked={localFilters.type.includes(opt)} onChange={() => toggleFilter('type', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                             <span className="text-slate-300 text-sm leading-tight">{opt}</span>
@@ -1030,7 +1030,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                                     onChange={(e) => setFilterSearch(prev => ({ ...prev, typePlus: e.target.value }))}
                                 />
                                 <div className="bg-slate-700/50 rounded-lg p-2 overflow-y-auto border border-slate-600 flex-1">
-                                    {(globalFilterOptions.typePluses || []).filter(o => o.toLowerCase().includes(filterSearch.typePlus.toLowerCase())).map(opt => (
+                                    {(globalFilterOptions.typePluses || []).filter(o => o && String(o).toLowerCase().includes(String(filterSearch.typePlus || '').toLowerCase())).map(opt => (
                                         <label key={opt} className="flex items-center space-x-2 p-1.5 hover:bg-slate-600/50 rounded cursor-pointer transition-colors">
                                             <input type="checkbox" checked={localFilters.typePlus.includes(opt)} onChange={() => toggleFilter('typePlus', opt)} className="form-checkbox h-4 w-4 text-sky-500 rounded bg-slate-800 border-slate-500" />
                                             <span className="text-slate-300 text-sm leading-tight">{opt}</span>
