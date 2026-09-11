@@ -62,28 +62,13 @@ export const fetchSalesFromSupabase = async (onProgress: (message: string) => vo
             };
         }
 
-        // Map column keys exactly as the processor expects under UPPERCASE keys.
-        // E.g. db 'division' ➡️ RawSalesDataRow 'DIVISION'
-        const standardizedData: RawSalesDataRow[] = allRecords.map(item => ({
-            'DIVISION': item.division || '',
-            'DEPARTMENT': item.department || '',
-            'CATEGORY': item.category || '',
-            'SUBCATEGORY': item.subcategory || '',
-            'CLASS': item.class || '',
-            'BRAND': item.brand || '',
-            'BRANCH NAME': item.branch_name || '',
-            'BRANCH CODE': item.branch_code || '',
-            'ITEM CODE': item.item_code || '',
-            'ITEM DESCRIPTION': item.item_description || '',
-            'TYPE': item.type || '',
-            'TYPE Plus': item.type_plus || '',
-            '2025 CASH SALES': Number(item.sales_2025_cash || 0),
-            '2025 CREDIT SALES': Number(item.sales_2025_credit || 0),
-            '2025 TOTAL SALES': Number(item.sales_2025_total || 0),
-            '2026 CASH SALES': Number(item.sales_2026_cash || 0),
-            '2026 CREDIT SALES': Number(item.sales_2026_credit || 0),
-            '2026 TOTAL SALES': Number(item.sales_2026_total || 0),
-        }));
+        // Map column keys dynamically using normalizeRow helper.
+        // This is 100% immune to casing styling differences (works with lowercase division or UPPERCASE DIVISION!)
+        const { normalizeRow } = await import('./dataProcessor');
+        const standardizedData: RawSalesDataRow[] = allRecords.map(item => {
+            const rawKeys = Object.keys(item);
+            return normalizeRow(item, rawKeys);
+        });
 
         return { data: standardizedData, error: null };
     } catch (err: any) {

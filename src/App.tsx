@@ -234,6 +234,7 @@ const App: React.FC = () => {
 
         try {
             const supabaseRows = allData.map(row => ({
+                // Lowercase snake_case fields (supports custom PostgreSQL layouts)
                 division: row['DIVISION'] || '',
                 department: row['DEPARTMENT'] || '',
                 category: row['CATEGORY'] || '',
@@ -252,6 +253,26 @@ const App: React.FC = () => {
                 sales_2026_cash: Number(row['2026 CASH SALES'] || 0),
                 sales_2026_credit: Number(row['2026 CREDIT SALES'] || 0),
                 sales_2026_total: Number(row['2026 TOTAL SALES'] || 0),
+
+                // UPPERCASE precise spreadsheet fields (matches high-level direct schema imports)
+                'DIVISION': row['DIVISION'] || '',
+                'DEPARTMENT': row['DEPARTMENT'] || '',
+                'CATEGORY': row['CATEGORY'] || '',
+                'SUBCATEGORY': row['SUBCATEGORY'] || '',
+                'CLASS': row['CLASS'] || '',
+                'BRAND': row['BRAND'] || '',
+                'BRANCH NAME': row['BRANCH NAME'] || '',
+                'BRANCH CODE': row['BRANCH CODE'] || '',
+                'ITEM CODE': row['ITEM CODE'] || '',
+                'ITEM DESCRIPTION': row['ITEM DESCRIPTION'] || '',
+                'TYPE': row['TYPE'] || '',
+                'TYPE Plus': row['TYPE Plus'] || '',
+                '2025 CASH SALES': Number(row['2025 CASH SALES'] || 0),
+                '2025 CREDIT SALES': Number(row['2025 CREDIT SALES'] || 0),
+                '2025 TOTAL SALES': Number(row['2025 TOTAL SALES'] || 0),
+                '2026 CASH SALES': Number(row['2026 CASH SALES'] || 0),
+                '2026 CREDIT SALES': Number(row['2026 CREDIT SALES'] || 0),
+                '2026 TOTAL SALES': Number(row['2026 TOTAL SALES'] || 0),
             }));
 
             setLoadingState({ isLoading: true, progress: 10, message: 'Clearing stale records from Supabase...' });
