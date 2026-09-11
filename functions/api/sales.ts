@@ -94,12 +94,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       'ITEM DESCRIPTION',
       'TYPE',
       'TYPE Plus',
-      '2024 CASH SALES',
-      '2024 CREDIT SALES',
-      '2024 TOTAL SALES',
       '2025 CASH SALES',
       '2025 CREDIT SALES',
-      '2025 TOTAL SALES'
+      '2025 TOTAL SALES',
+      '2026 CASH SALES',
+      '2026 CREDIT SALES',
+      '2026 TOTAL SALES'
     ];
 
     // Explicit dictionary map from standard uppercase React keys to your SQLite columns
@@ -116,12 +116,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       'ITEM DESCRIPTION': 'item_description',
       'TYPE': 'type',
       'TYPE Plus': 'type_plus',
-      '2024 CASH SALES': 'sales_2024_cash',
-      '2024 CREDIT SALES': 'sales_2024_credit',
-      '2024 TOTAL SALES': 'sales_2024_total',
       '2025 CASH SALES': 'sales_2025_cash',
       '2025 CREDIT SALES': 'sales_2025_credit',
-      '2025 TOTAL SALES': 'sales_2025_total'
+      '2025 TOTAL SALES': 'sales_2025_total',
+      '2026 CASH SALES': 'sales_2026_cash',
+      '2026 CREDIT SALES': 'sales_2026_credit',
+      '2026 TOTAL SALES': 'sales_2026_total'
     };
 
     // Helper to escape CSV values
