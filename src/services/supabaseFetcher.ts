@@ -14,7 +14,12 @@ export interface FetchResult {
 export const fetchSalesFromSupabase = async (onProgress: (message: string) => void): Promise<FetchResult> => {
     try {
         onProgress('Initializing Supabase client connection...');
-        const CHUNK_SIZE = 1000; // Supabase/PostgREST standard row query limit threshold
+        
+        // Increase requested size to maximize download speed!
+        // We set a high request limit, but loop safely purely based on data existence.
+        // This is 100% safe if your Supabase server has a lower maximum row response limit cap.
+        const CHUNK_SIZE = 50000; 
+        
         let lastId = 0;
         let allRecords: any[] = [];
         let hasMoreData = true;
@@ -46,13 +51,7 @@ export const fetchSalesFromSupabase = async (onProgress: (message: string) => vo
             // Keyset advance
             const lastItem = data[data.length - 1];
             lastId = lastItem.id;
-
-            if (data.length < CHUNK_SIZE) {
-                // If returned rows is less than limit, there is no more data left in remote tables
-                hasMoreData = false;
-            } else {
-                chunkIndex++;
-            }
+            chunkIndex++;
         }
 
         if (allRecords.length === 0) {
