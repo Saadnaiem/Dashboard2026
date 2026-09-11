@@ -415,9 +415,9 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
             return `Drilldown: ${currentTitle}`;
         };
 
-        // USER REQUEST: filter by branch and brand in ALL pages
+        // USER REQUEST: filter by division, branch and brand in ALL pages
         const visibleFilters = {
-            division: false, // Hidden for deep dive, handled by clicks
+            division: true,
             branch: true,
             brand: true,
             type: true,
