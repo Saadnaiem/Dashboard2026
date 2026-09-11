@@ -5,7 +5,6 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Papa from 'papaparse';
 import { RawSalesDataRow, ProcessedData, FilterState } from './types';
 import { processSalesData, normalizeRow } from './services/dataProcessor';
-import { fetchSalesData } from './services/dataFetcher';
 import LoadingIndicator from './components/LoadingIndicator';
 import Dashboard from './components/Dashboard';
 import DrilldownView from './components/DrilldownView';
@@ -66,56 +65,8 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const loadData = async () => {
-            setError(null);
-            setLoadingState({ isLoading: true, progress: 10, message: 'Initiating download...' });
-
-            const { data, error: fetchError } = await fetchSalesData((msg: string) =>
-                setLoadingState(prev => ({ ...prev, message: msg }))
-            );
-
-            if (fetchError || !data) {
-                setError(fetchError || 'Failed to fetching data.');
-                setLoadingState({ isLoading: false, progress: 0, message: '' });
-                return;
-            }
-
-            setLoadingState({ isLoading: true, progress: 25, message: 'Parsing data...' });
-
-            Papa.parse<Record<string, string>>(data, {
-                header: true, skipEmptyLines: true, worker: true,
-                complete: (results) => {
-                    setLoadingState({ isLoading: true, progress: 50, message: 'Validating data...' });
-                    const fileHeaders = results.meta.fields?.map(h => h.trim().toUpperCase()) || [];
-
-                    // Basic validation to ensure we have *some* data
-                    if (fileHeaders.length === 0 || results.data.length === 0) {
-                        setError("Parsed data is empty or invalid format.");
-                        setLoadingState({ isLoading: false, progress: 0, message: '' });
-                        return;
-                    }
-
-                    // Strict column check can be relaxed or kept. Keeping minimal check.
-                    const requiredHeaders = ['DIVISION']; // Minimal check
-                    const missingHeaders = requiredHeaders.filter(h => !fileHeaders.includes(h));
-
-                    if (missingHeaders.length > 0) {
-                        setError(`Missing critical columns: ${missingHeaders.join(', ')}`);
-                        setLoadingState({ isLoading: false, progress: 0, message: '' });
-                        return;
-                    }
-
-                    setAllData(results.data.map(row => normalizeRow(row, fileHeaders)));
-                    setLoadingState({ isLoading: true, progress: 75, message: 'Processing data...' });
-                },
-                error: (err: any) => {
-                    setError(`Failed to parse CSV data: ${err.message}`);
-                    setLoadingState({ isLoading: false, progress: 0, message: '' });
-                }
-            });
-        };
-
-        loadData();
+        // Automatically set loading state false when starting up since we wait for direct CSV upload from user
+        setLoadingState({ isLoading: false, progress: 0, message: '' });
     }, []);
 
     useEffect(() => {
@@ -249,18 +200,31 @@ const App: React.FC = () => {
     };
 
     const renderContent = () => {
-        if (error) {
+        if (!allData || allData.length === 0) {
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gray-50 p-4">
-                    <div className="w-full max-w-2xl bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl shadow-sm mb-8" role="alert">
-                        <strong className="font-bold text-lg block mb-2">Unable to Load Data</strong>
-                        <span className="block">{error}</span>
-                    </div>
+                <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 p-4">
+                    <div className="w-full max-w-md p-8 bg-slate-800/50 rounded-2xl shadow-2xl border border-slate-700">
+                        <div className="text-center mb-8">
+                            <div className="flex items-center justify-center gap-4 mb-4">
+                                <div className="w-12 h-12 bg-sky-600 rounded-lg flex items-center justify-center shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                </div>
+                                <h1 className="text-3xl font-extrabold text-white">Pharmacy Analytics</h1>
+                            </div>
+                            <h2 className="text-xl font-bold text-sky-400">Upload Sales CSV Data</h2>
+                            <p className="text-sm text-slate-400 mt-2">Select your sales CSV record file to launch the dashboard insights.</p>
+                        </div>
 
-                    <div className="flex flex-col items-center gap-4 bg-white p-8 rounded-xl shadow-lg border border-gray-100 max-w-md w-full">
-                        <h2 className="text-xl font-bold text-gray-800">Manual Upload (Fallback)</h2>
-                        <p className="text-sm text-gray-500 mb-4">If the automatic download fails, you can upload the CSV manually below.</p>
-                        <label className="block w-full">
+                        {error && (
+                            <div className="w-full bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm mb-6 text-center" role="alert">
+                                <strong className="font-bold block mb-1">Upload Error</strong>
+                                <span className="block">{error}</span>
+                            </div>
+                        )}
+
+                        <label className="block w-full cursor-pointer">
                             <span className="sr-only">Choose CSV file</span>
                             <input
                                 type="file"
@@ -268,25 +232,14 @@ const App: React.FC = () => {
                                 onChange={handleFileUpload}
                                 className="hidden"
                             />
-                            <div className="flex flex-col items-center justify-center px-4 py-6 bg-indigo-50 text-indigo-600 rounded-lg border-2 border-dashed border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 transition-all duration-300 group">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="flex flex-col items-center justify-center px-4 py-8 bg-slate-700/50 text-sky-400 rounded-lg border-2 border-dashed border-slate-600 hover:bg-slate-700 hover:border-sky-500 transition-all duration-300 group">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-10 mb-3 text-sky-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                 </svg>
-                                <span className="font-semibold">Click to Upload CSV</span>
+                                <span className="font-bold text-lg text-white group-hover:text-sky-400 transition-colors">Select CSV File</span>
+                                <span className="text-xs text-slate-400 mt-2 text-center break-words px-4">Required columns: DIVISION, BRANCH NAME, BRAND, ITEM DESCRIPTION</span>
                             </div>
                         </label>
-
-                        <div className="relative w-full py-2">
-                            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200"></span></div>
-                            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Or</span></div>
-                        </div>
-
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="text-gray-500 hover:text-indigo-600 text-sm font-medium underline transition-colors"
-                        >
-                            Try fetching again
-                        </button>
                     </div>
                 </div>
             );
