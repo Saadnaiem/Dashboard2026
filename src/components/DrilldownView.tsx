@@ -384,7 +384,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
         }));
 
         if (searchTerm) finalData = finalData.filter(item =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (item.code && item.code.toLowerCase().includes(searchTerm.toLowerCase()))
         );
 
