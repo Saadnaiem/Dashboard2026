@@ -21,7 +21,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ progress, message, 
             </div>
             
             <h3 className="text-xl font-bold text-white tracking-wider mt-4">Pharmacy Analytics</h3>
-            <p className="text-slate-300 text-sm mt-1 max-w-sm">Synchronizing cloud database metrics securely into local cache memory</p>
+            <p className="text-slate-300 text-sm mt-1 max-w-sm">Streaming high-speed CSV dataset directly from Supabase Cloud PostgreSQL</p>
 
             <div className="w-full bg-slate-800 rounded-full h-5 mt-8 overflow-hidden shadow-inner border border-slate-700">
                 <div
