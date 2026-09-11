@@ -24,7 +24,7 @@ export const fetchSalesFromSupabase = async (
     }) => void
 ): Promise<FetchResult> => {
     try {
-        onProgress({ stage: 'init', loadedRows: 0, totalRows: null, message: 'Initializing connection and checking Supabase server...' });
+        onProgress({ stage: 'init', loadedRows: 0, totalRows: null, message: 'Downloading dataset from server...' });
         
         // 1. Check Row Count in Supabase
         const { count, error: countError } = await supabase
@@ -66,7 +66,7 @@ export const fetchSalesFromSupabase = async (
                 totalRows: totalCount,
                 elapsedSeconds: Math.round(elapsedSeconds),
                 estimatedRemainingSeconds: estimatedRemainingSeconds ? Math.ceil(estimatedRemainingSeconds) : null,
-                message: `Downloading dataset from Supabase...`
+                message: `Downloading dataset from server...`
             });
 
             // REQUEST CSV format directly to bypass heavy PostgREST JSON serialization overhead

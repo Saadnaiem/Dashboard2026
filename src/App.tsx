@@ -103,6 +103,7 @@ const App: React.FC = () => {
             const { data, error: fetchError } = await fetchSalesFromSupabase((status) => {
                 let percent = 10;
                 if (status.totalRows && status.totalRows > 0) {
+                    // Span downloading up to 80%
                     percent = Math.min(80, Math.round((status.loadedRows / status.totalRows) * 70) + 10);
                 }
                 setLoadingState({ 
@@ -128,7 +129,17 @@ const App: React.FC = () => {
             setLoadingState({ isLoading: true, progress: 85, message: 'Processing Supabase records...', details: null });
             
             // Generate robust precompiled search index for each row
-            const processedRecords = data.map(row => {
+            const processedRecords = data.map((row, index, arr) => {
+                // Periodically update the progress bar to 95% while heavy string manipulation index mapping occurs!
+                if (index % 25000 === 0) {
+                    const processPercent = Math.min(95, 85 + Math.round((index / arr.length) * 10));
+                    setLoadingState({
+                        isLoading: true,
+                        progress: processPercent,
+                        message: 'Indexing catalog search dimensions...',
+                        details: null
+                    });
+                }
                 row._searchIndex = [
                     row['DIVISION'],
                     row['DEPARTMENT'] || '',
