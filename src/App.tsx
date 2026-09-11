@@ -5,6 +5,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Papa from 'papaparse';
 import { RawSalesDataRow, ProcessedData, FilterState } from './types';
 import { processSalesData, normalizeRow } from './services/dataProcessor';
+import { fetchSalesFromSupabase } from './services/supabaseFetcher';
 import { supabase } from './services/supabaseClient';
 import LoadingIndicator from './components/LoadingIndicator';
 import Dashboard from './components/Dashboard';
@@ -77,6 +78,55 @@ const App: React.FC = () => {
             window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
+
+    // Try to load initial dataset from Supabase first
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setError(null);
+            setLoadingState({ isLoading: true, progress: 10, message: 'Initiating download from Supabase...' });
+
+            const { data, error: fetchError } = await fetchSalesFromSupabase((msg: string) =>
+                setLoadingState(prev => ({ ...prev, message: msg }))
+            );
+
+            if (fetchError || !data) {
+                // If it fails or is empty, we fall back to manual CSV upload screen without a fatal error
+                console.warn("Supabase fetch fallback:", fetchError);
+                setLoadingState({ isLoading: false, progress: 0, message: '' });
+                return;
+            }
+
+            setLoadingState({ isLoading: true, progress: 80, message: 'Processing Supabase records...' });
+            
+            // Generate robust precompiled search index for each row
+            const processedRecords = data.map(row => {
+                row._searchIndex = [
+                    row['DIVISION'],
+                    row['DEPARTMENT'] || '',
+                    row['CATEGORY'] || '',
+                    row['SUBCATEGORY'] || '',
+                    row['CLASS'] || '',
+                    row['BRAND'],
+                    row['BRANCH NAME'],
+                    row['BRANCH CODE'] || '',
+                    row['ITEM CODE'] || '',
+                    row['ITEM DESCRIPTION'],
+                    row['TYPE'] || '',
+                    row['TYPE Plus'] || ''
+                ].map(val => String(val || '').toLowerCase()).join(' ');
+                return row;
+            });
+
+            setIsDataLoadedFromSupabase(true);
+            setAllData(processedRecords);
+        };
+
+        if (isSupabaseAvailable) {
+            loadInitialData();
+        } else {
+            setLoadingState({ isLoading: false, progress: 0, message: '' });
+        }
+    }, [isSupabaseAvailable]);
 
     useEffect(() => {
         if (allData.length > 0) {
