@@ -6,6 +6,7 @@ import Papa from 'papaparse';
 import { RawSalesDataRow, ProcessedData, FilterState } from './types';
 import { processSalesData, normalizeRow } from './services/dataProcessor';
 import { fetchSalesFromSupabase } from './services/supabaseFetcher';
+import { supabase } from './services/supabaseClient';
 import LoadingIndicator from './components/LoadingIndicator';
 import Dashboard from './components/Dashboard';
 import DrilldownView from './components/DrilldownView';
@@ -51,6 +52,19 @@ const App: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isAuthenticated') === 'true');
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Supabase Sync States
+    const [isSupabaseAvailable, setIsSupabaseAvailable] = useState(false);
+    const [isDataLoadedFromSupabase, setIsDataLoadedFromSupabase] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    useEffect(() => {
+        const url = import.meta.env.VITE_SUPABASE_URL;
+        const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        if (url && !url.includes('your-project') && key && !key.includes('eyJhbGciOi')) {
+            setIsSupabaseAvailable(true);
+        }
+    }, []);
 
     // Effect to sync auth state across tabs
     useEffect(() => {
@@ -103,6 +117,7 @@ const App: React.FC = () => {
                 return row;
             });
 
+            setIsDataLoadedFromSupabase(true);
             setAllData(processedRecords);
         };
 
@@ -204,6 +219,82 @@ const App: React.FC = () => {
         localStorage.removeItem('isAuthenticated');
         setIsAuthenticated(false);
         navigate('/login');
+    };
+
+    const handleSyncToSupabase = async () => {
+        if (!isSupabaseAvailable || allData.length === 0 || isSyncing) return;
+
+        setIsSyncing(true);
+        setError(null);
+        setLoadingState({ isLoading: true, progress: 0, message: 'Initiating database write sync...' });
+
+        try {
+            const supabaseRows = allData.map(row => ({
+                division: row['DIVISION'] || '',
+                department: row['DEPARTMENT'] || '',
+                category: row['CATEGORY'] || '',
+                subcategory: row['SUBCATEGORY'] || '',
+                class: row['CLASS'] || '',
+                brand: row['BRAND'] || '',
+                branch_name: row['BRANCH NAME'] || '',
+                branch_code: row['BRANCH CODE'] || '',
+                item_code: row['ITEM CODE'] || '',
+                item_description: row['ITEM DESCRIPTION'] || '',
+                type: row['TYPE'] || '',
+                type_plus: row['TYPE Plus'] || '',
+                sales_2025_cash: Number(row['2025 CASH SALES'] || 0),
+                sales_2025_credit: Number(row['2025 CREDIT SALES'] || 0),
+                sales_2025_total: Number(row['2025 TOTAL SALES'] || 0),
+                sales_2026_cash: Number(row['2026 CASH SALES'] || 0),
+                sales_2026_credit: Number(row['2026 CREDIT SALES'] || 0),
+                sales_2026_total: Number(row['2026 TOTAL SALES'] || 0),
+            }));
+
+            setLoadingState({ isLoading: true, progress: 10, message: 'Clearing stale records from Supabase...' });
+            
+            const { error: deleteError } = await supabase
+                .from('sales')
+                .delete()
+                .gt('id', 0);
+
+            if (deleteError) {
+                throw new Error(`Failed to clear table: ${deleteError.message}`);
+            }
+
+            const BATCH_SIZE = 1000;
+            const totalRows = supabaseRows.length;
+            
+            for (let i = 0; i < totalRows; i += BATCH_SIZE) {
+                const batch = supabaseRows.slice(i, i + BATCH_SIZE);
+                const currentProgress = Math.min(95, Math.round((i / totalRows) * 80) + 15);
+                
+                setLoadingState({ 
+                    isLoading: true, 
+                    progress: currentProgress, 
+                    message: `Syncing batch ${Math.floor(i / BATCH_SIZE) + 1} (${i.toLocaleString()} / ${totalRows.toLocaleString()} rows)...` 
+                });
+
+                const { error: insertError } = await supabase
+                    .from('sales')
+                    .insert(batch);
+
+                if (insertError) {
+                    throw new Error(`Insert error: ${insertError.message}`);
+                }
+            }
+
+            setIsDataLoadedFromSupabase(true);
+            setLoadingState({ isLoading: true, progress: 100, message: 'Database Synced Successfully!' });
+            setTimeout(() => setLoadingState({ isLoading: false, progress: 0, message: '' }), 1000);
+            
+            alert('Congratulations! Your sales dataset has been completely synced with Supabase successfully.');
+        } catch (err: any) {
+            console.error("Supabase sync failed:", err);
+            setError(`Database Sync Failed: ${err.message || 'Transmission interrupted'}`);
+            setLoadingState({ isLoading: false, progress: 0, message: '' });
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,6 +400,10 @@ const App: React.FC = () => {
                                     searchTerm={searchTerm}
                                     onSearchChange={setSearchTerm}
                                     globalData={processedData!}
+                                    isSupabaseAvailable={isSupabaseAvailable}
+                                    isDataLoadedFromSupabase={isDataLoadedFromSupabase}
+                                    onSyncToSupabase={handleSyncToSupabase}
+                                    isSyncing={isSyncing}
                                 />
                         }
                     />
