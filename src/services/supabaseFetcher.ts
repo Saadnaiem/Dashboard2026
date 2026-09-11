@@ -11,13 +11,29 @@ export interface FetchResult {
  * Uses client-side keyset pagination (sorting by ID and using .gt('id', lastId))
  * which scales as O(log N) rather than standard unindexed offsets.
  */
-export const fetchSalesFromSupabase = async (onProgress: (message: string) => void): Promise<FetchResult> => {
+export const fetchSalesFromSupabase = async (
+    onProgress: (status: { 
+        stage: 'init' | 'fetching' | 'processing';
+        loadedRows: number; 
+        totalRows: number | null;
+        elapsedSeconds?: number;
+        estimatedRemainingSeconds?: number | null;
+        message: string;
+    }) => void
+): Promise<FetchResult> => {
     try {
-        onProgress('Initializing Supabase client connection...');
+        onProgress({ stage: 'init', loadedRows: 0, totalRows: null, message: 'Initializing Supabase connection...' });
         
-        // Increase requested size to maximize download speed!
-        // We set a high request limit, but loop safely purely based on data existence.
-        // This is 100% safe if your Supabase server has a lower maximum row response limit cap.
+        // 1. Get the total count of rows first to construct highly precise interactive progress indicators!
+        const { count, error: countError } = await supabase
+            .from('sales')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+            console.error("Supabase count query warning:", countError);
+        }
+        
+        const totalCount = count || 0;
         const CHUNK_SIZE = 50000; 
         
         let lastId = 0;
@@ -25,9 +41,27 @@ export const fetchSalesFromSupabase = async (onProgress: (message: string) => vo
         let hasMoreData = true;
         let chunkIndex = 1;
 
+        const startTime = Date.now();
+
         // Perform parallel fetching configuration or sequential O(log N) keyset batch loading
         while (hasMoreData) {
-            onProgress(`Downloading records from Supabase [Batch ${chunkIndex}]...`);
+            const elapsedSeconds = (Date.now() - startTime) / 1000;
+            
+            // Calculate ETA math based on records downloaded per second so far
+            let estimatedRemainingSeconds: number | null = null;
+            if (allRecords.length > 0 && totalCount > allRecords.length) {
+                const rowsPerSecond = allRecords.length / elapsedSeconds;
+                estimatedRemainingSeconds = Math.max(0, (totalCount - allRecords.length) / rowsPerSecond);
+            }
+
+            onProgress({
+                stage: 'fetching',
+                loadedRows: allRecords.length,
+                totalRows: totalCount,
+                elapsedSeconds: Math.round(elapsedSeconds),
+                estimatedRemainingSeconds: estimatedRemainingSeconds ? Math.ceil(estimatedRemainingSeconds) : null,
+                message: `Downloading dataset from Supabase...`
+            });
 
             const { data, error } = await supabase
                 .from('sales')
@@ -61,8 +95,14 @@ export const fetchSalesFromSupabase = async (onProgress: (message: string) => vo
             };
         }
 
+        onProgress({
+            stage: 'processing',
+            loadedRows: allRecords.length,
+            totalRows: totalCount,
+            message: 'Parsing and matching column naming styles...'
+        });
+
         // Map column keys dynamically using normalizeRow helper.
-        // This is 100% immune to casing styling differences (works with lowercase division or UPPERCASE DIVISION!)
         const { normalizeRow } = await import('./dataProcessor');
         const standardizedData: RawSalesDataRow[] = allRecords.map(item => {
             const rawKeys = Object.keys(item);

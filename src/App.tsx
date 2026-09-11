@@ -40,7 +40,21 @@ const createEmptyProcessedData = (filterOptions: ProcessedData['filterOptions'])
 });
 
 const App: React.FC = () => {
-    const [loadingState, setLoadingState] = useState({ isLoading: false, progress: 0, message: '' });
+    const [loadingState, setLoadingState] = useState<{
+        isLoading: boolean;
+        progress: number;
+        message: string;
+        details?: {
+            loadedRows: number;
+            totalRows: number | null;
+            elapsedSeconds?: number;
+            estimatedRemainingSeconds?: number | null;
+        } | null;
+    }>({ 
+        isLoading: false, 
+        progress: 0, 
+        message: '' 
+    });
     const [error, setError] = useState<string | null>(null);
     const [allData, setAllData] = useState<RawSalesDataRow[]>([]);
     const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
@@ -79,16 +93,30 @@ const App: React.FC = () => {
         };
     }, []);
 
-    // Use a secondary effect to trigger the initial load once authentication is verified
+    // Try to load initial dataset from Supabase first
     useEffect(() => {
         const loadInitialData = async () => {
             if (!isSupabaseAvailable || !isAuthenticated) return;
             setError(null);
             setLoadingState({ isLoading: true, progress: 10, message: 'Initiating download from Supabase...' });
 
-            const { data, error: fetchError } = await fetchSalesFromSupabase((msg: string) =>
-                setLoadingState(prev => ({ ...prev, message: msg }))
-            );
+            const { data, error: fetchError } = await fetchSalesFromSupabase((status) => {
+                let percent = 10;
+                if (status.totalRows && status.totalRows > 0) {
+                    percent = Math.min(80, Math.round((status.loadedRows / status.totalRows) * 70) + 10);
+                }
+                setLoadingState({ 
+                    isLoading: true, 
+                    progress: percent, 
+                    message: status.message,
+                    details: {
+                        loadedRows: status.loadedRows,
+                        totalRows: status.totalRows,
+                        elapsedSeconds: status.elapsedSeconds,
+                        estimatedRemainingSeconds: status.estimatedRemainingSeconds
+                    }
+                });
+            });
 
             if (fetchError || !data) {
                 // If it fails or is empty, we fall back to manual CSV upload screen without a fatal error
@@ -97,7 +125,7 @@ const App: React.FC = () => {
                 return;
             }
 
-            setLoadingState({ isLoading: true, progress: 80, message: 'Processing Supabase records...' });
+            setLoadingState({ isLoading: true, progress: 85, message: 'Processing Supabase records...', details: null });
             
             // Generate robust precompiled search index for each row
             const processedRecords = data.map(row => {
@@ -364,7 +392,15 @@ const App: React.FC = () => {
 
         // 2. Show loading spinner while querying Supabase
         if (loadingState.isLoading) {
-            return <div className="min-h-screen flex items-center justify-center"><LoadingIndicator progress={loadingState.progress} message={loadingState.message} /></div>;
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                    <LoadingIndicator 
+                        progress={loadingState.progress} 
+                        message={loadingState.message} 
+                        details={loadingState.details} 
+                    />
+                </div>
+            );
         }
 
         // 3. Force CSV upload screen if allData (from Supabase or file) is empty after authenticated
