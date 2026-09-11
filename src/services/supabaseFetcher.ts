@@ -36,7 +36,9 @@ export const fetchSalesFromSupabase = async (
         }
         
         const totalCount = count || 0;
-        const CHUNK_SIZE = 50000; 
+        // Request up to 100,000 rows per batch in CSV format.
+        // Postgres can stream CSV ultra-fast, completely bypassing the default 1,000 JSON limit!
+        const CHUNK_SIZE = 100000; 
         
         let lastId = 0;
         let allRecords: any[] = [];
@@ -104,7 +106,11 @@ export const fetchSalesFromSupabase = async (
             const rawIdKey = Object.keys(lastItem).find(k => k.toUpperCase() === 'ID');
             lastId = rawIdKey ? Number(lastItem[rawIdKey] || 0) : 0;
 
-            if (parsed.length < CHUNK_SIZE) {
+            // In PostgREST/Supabase, there is a hard server-side limit of 1000 rows per request.
+            // If we request 50,000 but the server truncates at 1,000, we must NOT stop fetching.
+            // We only stop when the returned rows is less than 1,000 (meaning the very end is reached),
+            // or if it returns absolutely 0 rows.
+            if (parsed.length < 1000 || parsed.length === 0) {
                 hasMoreData = false;
             } else {
                 chunkIndex++;

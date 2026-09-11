@@ -483,7 +483,7 @@ const App: React.FC = () => {
                     />
                     <Route
                         path="/details/:viewType"
-                        element={<DrilldownView allRawData={filteredRows} globalFilterOptions={processedFilteredData?.filterOptions} globalData={processedData!} />}
+                        element={<DrilldownView allRawData={filteredRows} globalFilterOptions={processedData?.filterOptions} globalData={processedData!} />}
                     />
                 </Route>
             </Routes>
