@@ -5,6 +5,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Papa from 'papaparse';
 import { RawSalesDataRow, ProcessedData, FilterState } from './types';
 import { processSalesData, normalizeRow } from './services/dataProcessor';
+import { fetchSalesFromSupabase } from './services/supabaseFetcher';
 import LoadingIndicator from './components/LoadingIndicator';
 import Dashboard from './components/Dashboard';
 import DrilldownView from './components/DrilldownView';
@@ -64,9 +65,48 @@ const App: React.FC = () => {
         };
     }, []);
 
+    // Try to load initial dataset from Supabase first
     useEffect(() => {
-        // Automatically set loading state false when starting up since we wait for direct CSV upload from user
-        setLoadingState({ isLoading: false, progress: 0, message: '' });
+        const loadInitialData = async () => {
+            setError(null);
+            setLoadingState({ isLoading: true, progress: 10, message: 'Initiating download from Supabase...' });
+
+            const { data, error: fetchError } = await fetchSalesFromSupabase((msg: string) =>
+                setLoadingState(prev => ({ ...prev, message: msg }))
+            );
+
+            if (fetchError || !data) {
+                // Set loadingState false so users can still manually upload their CSV dataset if needed
+                console.warn("Supabase fetch fallback:", fetchError);
+                setLoadingState({ isLoading: false, progress: 0, message: '' });
+                return;
+            }
+
+            setLoadingState({ isLoading: true, progress: 80, message: 'Processing Supabase records...' });
+            
+            // Generate robust precompiled search index for each row
+            const processedRecords = data.map(row => {
+                row._searchIndex = [
+                    row['DIVISION'],
+                    row['DEPARTMENT'] || '',
+                    row['CATEGORY'] || '',
+                    row['SUBCATEGORY'] || '',
+                    row['CLASS'] || '',
+                    row['BRAND'],
+                    row['BRANCH NAME'],
+                    row['BRANCH CODE'] || '',
+                    row['ITEM CODE'] || '',
+                    row['ITEM DESCRIPTION'],
+                    row['TYPE'] || '',
+                    row['TYPE Plus'] || ''
+                ].map(val => String(val || '').toLowerCase()).join(' ');
+                return row;
+            });
+
+            setAllData(processedRecords);
+        };
+
+        loadInitialData();
     }, []);
 
     useEffect(() => {

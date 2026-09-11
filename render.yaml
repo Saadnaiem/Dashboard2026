@@ -1,0 +1,22 @@
+---
+# Render Blueprint Configuration (https://render.com/docs/blueprints)
+# Use this config to set up instant static deploys linked directly to your GitHub repo!
+services:
+  - type: web
+    name: pharmacy-sales-dashboard
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000
+    routes:
+      - type: rewrite
+        from: /*
+        to: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false # Set this securely in your Render dashboard environment variables!
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false # Set this securely in your Render dashboard environment variables!
