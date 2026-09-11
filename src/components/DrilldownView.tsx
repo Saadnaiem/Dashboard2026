@@ -522,7 +522,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
             case 'credit2026': return <td className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(value)}</td>;
             case 'cashContribution2026': return <td className="p-4 text-right text-xs text-sky-200">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
 
-            case 'sales2025': return <td className="p-4 text-right text-slate-400">{formatNumberAbbreviated(value)}</td>;
+            case 'sales2025': return <td className="p-4 text-right font-semibold text-green-300">{formatNumberAbbreviated(value)}</td>;
             case 'cash2025': return <td className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(value)}</td>;
             case 'credit2025': return <td className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(value)}</td>;
             case 'cashContribution2025': return <td className="p-4 text-right text-xs text-sky-200/70">{typeof value === 'number' ? `${value.toFixed(1)}%` : '-'}</td>;
@@ -677,7 +677,7 @@ const DrilldownView: React.FC<DrilldownViewProps> = ({ allRawData, globalFilterO
                         case 'credit2026': return <td key={h.key} className="p-4 text-right text-xs text-orange-200">{formatNumberAbbreviated(summaryTotals.totalCredit2026)}</td>
                         case 'cashContribution2026': return <td key={h.key} className="p-4 text-right text-xs text-sky-200">{summaryTotals.total2026 > 0 ? `${((summaryTotals.totalCash2026 / summaryTotals.total2026) * 100).toFixed(1)}%` : '-'}</td>
 
-                        case 'sales2025': return <td key={h.key} className="p-4 text-right text-slate-300">{formatNumberAbbreviated(summaryTotals.total2025)}</td>
+                        case 'sales2025': return <td key={h.key} className="p-4 text-right text-green-300">{formatNumberAbbreviated(summaryTotals.total2025)}</td>
                         case 'cash2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{formatNumberAbbreviated(summaryTotals.totalCash2025)}</td>
                         case 'credit2025': return <td key={h.key} className="p-4 text-right text-xs text-orange-200/70">{formatNumberAbbreviated(summaryTotals.totalCredit2025)}</td>
                         case 'cashContribution2025': return <td key={h.key} className="p-4 text-right text-xs text-sky-200/70">{summaryTotals.total2025 > 0 ? `${((summaryTotals.totalCash2025 / summaryTotals.total2025) * 100).toFixed(1)}%` : '-'}</td>
