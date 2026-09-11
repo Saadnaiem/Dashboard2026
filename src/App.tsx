@@ -79,9 +79,10 @@ const App: React.FC = () => {
         };
     }, []);
 
-    // Try to load initial dataset from Supabase first
+    // Use a secondary effect to trigger the initial load once authentication is verified
     useEffect(() => {
         const loadInitialData = async () => {
+            if (!isSupabaseAvailable || !isAuthenticated) return;
             setError(null);
             setLoadingState({ isLoading: true, progress: 10, message: 'Initiating download from Supabase...' });
 
@@ -121,12 +122,8 @@ const App: React.FC = () => {
             setAllData(processedRecords);
         };
 
-        if (isSupabaseAvailable) {
-            loadInitialData();
-        } else {
-            setLoadingState({ isLoading: false, progress: 0, message: '' });
-        }
-    }, [isSupabaseAvailable]);
+        loadInitialData();
+    }, [isSupabaseAvailable, isAuthenticated]);
 
     useEffect(() => {
         if (allData.length > 0) {
