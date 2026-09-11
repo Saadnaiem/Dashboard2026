@@ -1,6 +1,5 @@
 import { supabase } from './supabaseClient';
 import { RawSalesDataRow } from '../types';
-import { dbCache } from './localCache';
 import Papa from 'papaparse';
 
 export interface FetchResult {
@@ -25,7 +24,7 @@ export const fetchSalesFromSupabase = async (
     }) => void
 ): Promise<FetchResult> => {
     try {
-        onProgress({ stage: 'init', loadedRows: 0, totalRows: null, message: 'Initializing connection and checking local browser cache...' });
+        onProgress({ stage: 'init', loadedRows: 0, totalRows: null, message: 'Initializing connection and checking Supabase server...' });
         
         // 1. Check Row Count in Supabase
         const { count, error: countError } = await supabase
@@ -37,27 +36,6 @@ export const fetchSalesFromSupabase = async (
         }
         
         const totalCount = count || 0;
-
-        // 2. Query Local Cache state
-        const cachedCount = await dbCache.getCachedCount();
-        if (totalCount > 0 && cachedCount === totalCount) {
-            onProgress({ stage: 'processing', loadedRows: totalCount, totalRows: totalCount, message: 'Loading dataset directly from browser Cache...' });
-            
-            const cachedRecords = await dbCache.getCachedSales();
-            if (cachedRecords && cachedRecords.length === totalCount) {
-                // Return cache instantly! (Load time becomes 1 second instead of minutes)
-                console.log("Cached dataset loaded successfully! Loaded rows:", cachedRecords.length);
-                
-                // Map column keys dynamically using normalizeRow helper.
-                const { normalizeRow } = await import('./dataProcessor');
-                const standardizedData: RawSalesDataRow[] = cachedRecords.map(item => {
-                    const rawKeys = Object.keys(item);
-                    return normalizeRow(item, rawKeys);
-                });
-                return { data: standardizedData, error: null };
-            }
-        }
-
         const CHUNK_SIZE = 50000; 
         
         let lastId = 0;
@@ -138,19 +116,6 @@ export const fetchSalesFromSupabase = async (
                 data: null,
                 error: 'The "sales" table is currently empty in Supabase. Please load rows using CSV upload or manual scripts.'
             };
-        }
-
-        // Write elements safely into local browser cache database asynchronously so future refreshes bypass downloads
-        try {
-            onProgress({
-                stage: 'processing',
-                loadedRows: allRecords.length,
-                totalRows: totalCount,
-                message: 'Writing records into browser database cache...'
-            });
-            await dbCache.setCachedSales(allRecords);
-        } catch (cacheWriteError) {
-            console.warn("Could not save to local IndexedDB:", cacheWriteError);
         }
 
         onProgress({
